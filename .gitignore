@@ -25,3 +25,6 @@ src/stpdfs-fuse
 *.mod
 *.mod.*
 *.order
+
+Debug/
+.vs/

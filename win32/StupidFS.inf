@@ -1,0 +1,77 @@
+;
+; StupidFS.inf
+;
+
+[Version]
+Signature="$WINDOWS NT$"
+Class=System ; TODO: specify appropriate Class
+ClassGuid={4d36e97d-e325-11ce-bfc1-08002be10318} ; TODO: specify appropriate ClassGuid
+Provider=%ManufacturerName%
+CatalogFile=StupidFS.cat
+DriverVer= ; TODO: set DriverVer in stampinf property pages
+PnpLockdown=1
+
+[DestinationDirs]
+DefaultDestDir = 12
+StupidFS_Device_CoInstaller_CopyFiles = 11
+
+[SourceDisksNames]
+1 = %DiskName%,,,""
+
+[SourceDisksFiles]
+StupidFS.sys  = 1,,
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll=1 ; make sure the number matches with SourceDisksNames
+
+;*****************************************
+; Install Section
+;*****************************************
+
+[Manufacturer]
+%ManufacturerName%=Standard,NT$ARCH$
+
+[Standard.NT$ARCH$]
+%StupidFS.DeviceDesc%=StupidFS_Device, Root\StupidFS ; TODO: edit hw-id
+
+[StupidFS_Device.NT]
+CopyFiles=Drivers_Dir
+
+[Drivers_Dir]
+StupidFS.sys
+
+;-------------- Service installation
+[StupidFS_Device.NT.Services]
+AddService = StupidFS,%SPSVCINST_ASSOCSERVICE%, StupidFS_Service_Inst
+
+; -------------- StupidFS driver install sections
+[StupidFS_Service_Inst]
+DisplayName    = %StupidFS.SVCDESC%
+ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
+StartType      = 3               ; SERVICE_DEMAND_START
+ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %12%\StupidFS.sys
+
+;
+;--- StupidFS_Device Coinstaller installation ------
+;
+
+[StupidFS_Device.NT.CoInstallers]
+AddReg=StupidFS_Device_CoInstaller_AddReg
+CopyFiles=StupidFS_Device_CoInstaller_CopyFiles
+
+[StupidFS_Device_CoInstaller_AddReg]
+HKR,,CoInstallers32,0x00010000, "WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll,WdfCoInstaller"
+
+[StupidFS_Device_CoInstaller_CopyFiles]
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll
+
+[StupidFS_Device.NT.Wdf]
+KmdfService =  StupidFS, StupidFS_wdfsect
+[StupidFS_wdfsect]
+KmdfLibraryVersion = $KMDFVERSION$
+
+[Strings]
+SPSVCINST_ASSOCSERVICE= 0x00000002
+ManufacturerName="d0p1" ;TODO: Replace with your manufacturer name
+DiskName = "StupidFS Installation Disk"
+StupidFS.DeviceDesc = "StupidFS Device"
+StupidFS.SVCDESC = "StupidFS Service"
