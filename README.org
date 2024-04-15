@@ -1,0 +1,6 @@
+* StupidFS
+
+
+*** License
+
+StupidFS is dual-licensed under both CeCiLL-B and BSD3 licenses
