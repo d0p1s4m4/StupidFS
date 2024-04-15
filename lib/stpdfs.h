@@ -1,11 +1,16 @@
 #ifndef STPDFS_H
 # define STPDFS_H 1
 
+# include <stdint.h>
+
 #define STPDFS_MAGIC 0x44505453
 
 #define STPDFS_BLOCK_SIZE 512
 
-struct stpdfs_superblock {
+/**
+ * \brief StupidFS Superblock
+ */
+struct stpdfs_sb {
 	uint32_t magic;
 	uint32_t isize;
 	uint32_t fsize;

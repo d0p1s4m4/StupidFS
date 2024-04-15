@@ -5,8 +5,8 @@ MOD_DEVDIR = $(PWD)
 export module_DATA
 
 EXTRA_PROGRAMS = stpdfs_module
-stpdfs_module_SOURCES = module_stpdfs.c 
-module_DATA = module_stpdfs.o 
+stpdfs_module_SOURCES = module.c 
+module_DATA = module.o 
 
 $(module_DATA): $(stpdfs_module_SOURCES) 
 	mv Makefile Makefile.automake 

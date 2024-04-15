@@ -1,5 +1,14 @@
+/**
+ * \addtogroup driver
+ * @{
+ */
 #include <ntddk.h>
 #include <wdf.h>
+
+/**
+ * \defgroup win32 Windows Driver
+ * @{
+ */
 
 DRIVER_INITIALIZE DriverEntry;
 
@@ -43,3 +52,5 @@ DriverEntry(
 #pragma prefast(pop)
     return status;
 }
+
+/** @} @} */
