@@ -3,12 +3,39 @@
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{babel}
-\usepackage{ lmodern}
-
+\usepackage{lmodern}
+\usepackage{listings}
+\usepackage{xcolor}
 \usepackage[
   pdftitle={StupidFS},
   pdfauthor={\@author},
 ]{hyperref}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=mystyle}
 
 \date{\today}
 \title{%
@@ -42,7 +69,7 @@
  			\hline
  			\textbf{Flag} & \textbf{Hexadecimal} & \textbf{ASCII} & \textbf{Data structure}  \\ 
 			\hline
- 			STPDFS\_SB\_MAGIC & 0x44505453 & STPD & TODO \\ 
+ 			STPDFS\_SB\_MAGIC & 0x44505453 & STPD & Superblock \\ 
  			\hline
 		\end{tabular}
 	\end{center}
@@ -51,8 +78,34 @@
 
 	\section{Superblocks}
 
-	
+	\begin{lstlisting}[language=C]
+struct stpdfs_sb {
+	uint32_t magic;
+	uint32_t isize;
+	uint32_t fsize;
+	uint32_t free[100];
+	uint8_t nfree;
+	uint8_t flock;
+	uint8_t ilock;
+	uint8_t fmod;
+	uint32_t time[2];
+};
+	\end{lstlisting}
 
+	\section{INodes}
+
+	\begin{lstlisting}[language=C]
+struct inode {
+	uint16_t mode;
+	uint8_t nlink;
+	uint8_t uid;
+	uint8_t gid;
+	uint32_t size;
+	uint16_t addr[8];
+	uint32_t actime[2];
+	uint32_t modtime[2];
+};
+	\end{lstlisting}
 	\appendix
 
 \end{document}
