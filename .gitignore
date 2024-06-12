@@ -29,3 +29,5 @@ src/stpdfs-fuse
 Debug/
 .vs/
 html/
+.dirstamp
+mkfs.stpd

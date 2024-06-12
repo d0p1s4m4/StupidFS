@@ -14,6 +14,8 @@ AC_PROG_INSTALL
 AC_PROG_RANLIB
 AM_PROG_CC_C_O
 
+AC_CONFIG_HEADERS([config.h])
+
 AS_IF([ test "x$host_os" != "xmingw32" ], [
 	PKG_CHECK_MODULES([FUSE], [fuse3])
 ])
@@ -26,8 +28,23 @@ AC_CHECK_INCLUDES_DEFAULT
 AC_C_CONST
 AC_C_INLINE
 
+AC_CHECK_HEADERS(m4_normalize([
+	libgen.h
+	getopt.h
+]))
+
+AC_CHECK_TYPES([struct option], [], [],
+[#ifdef HAVE_GETOPT_H
+#include <getopt.h>
+#endif])
+
+AC_CHECK_FUNCS(m4_normalize([
+	getopt_long
+]))
+
 AC_CONFIG_FILES([Makefile
 				lib/Makefile
+				tools/Makefile
 				linux/Makefile
 				fuse/Makefile])
 

@@ -1,0 +1,29 @@
+.Dd $Mdocdate$
+.Dt MKFS.STPD 8
+.Os
+.Sh NAME
+.Nm mkfs.stpd
+.Nd create a Stupid filesystem on a device.
+.Sh SYNOPSIS
+.Nm mkfs.stpd
+.Op Fl V
+.Op Fl h
+.Op Fl i Ar num
+.Ar device
+.Op blocks
+.Sh DESCRIPTION
+.Bl -tag -width Ds
+.It Fl h
+Display help menu.
+.It Fl i
+Number of inodes for the filesystem.
+.It Fl V
+Display version information.
+.El
+.Sh EXIT STATUS
+.Ex -std
+.Sh SEE ALSO
+.Xr stupidfs 3
+.Sh AUTHORS
+.An -nosplit
+.An d0p1 Aq Mt contact@d0p1.eu
