@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <time.h>
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif /* HAVE_CONFIG_H */
@@ -114,7 +115,10 @@ mkfs()
 	write_block(fd, NULL, 0);
 
 	super.magic = STPDFS_SB_MAGIC;
+	super.isize = inodes / STPDFS_INODES_PER_BLOCK;
 	super.fsize = blocks;
+
+	super.time = time(NULL);
 
 	write_block(fd, &super, sizeof(struct stpdfs_sb));
 
