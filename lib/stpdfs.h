@@ -2,60 +2,90 @@
 # define STPDFS_H 1
 
 # include <stdint.h>
+# include <stddef.h>
 
 # define STPDFS_SB_MAGIC 0x44505453
+# define STPDFS_SB_REV   STPDFS_SB_REV_1
+# define STPDFS_SB_REV_1 1
 
 # define STPDFS_BLOCK_SIZE_BITS 9
 # define STPDFS_BLOCK_SIZE (1 << STPDFS_BLOCK_SIZE_BITS)
 
-# define STPDFS_NAME_MAX 255
+# define STPDFS_NAME_MAX 28
 
 # define STPDFS_INODES_PER_BLOCK (STPDFS_BLOCK_SIZE / (sizeof(struct stpdfs_inode)))
 
 # define STPDFS_ROOT_INO 1
 
-# define STPDFS_LZP_COMPRESSION (1 << 0)
-# define STPDFS_FILE_ENCRYPTION (1 << 1)
+# define STPDFS_INO_FLAG_ALOC (1 << 15)
+# define STPDFS_INO_FLAG_LZP  (1 << 0)
+# define STPDFS_INO_FLAG_ENC  (1 << 1)
+
+# define STPDFS_S_IFMT   0xF000
+# define STPDFS_S_IFSOCK 0xA000
+# define STPDFS_S_IFLNK  0xC000
+# define STPDFS_S_IFREG  0x8000
+# define STPDFS_S_IFBLK  0x6000
+# define STPDFS_S_IFDIR  0x4000
 
 struct stpdfs_free {
 	uint32_t free[100];
 	uint8_t nfree;
 } __attribute__((packed));
 
+enum stpdfs_state {
+	STPDFS_CLEANLY_UNMOUNTED = 0,
+	STPDFS_ERROR             = 1
+};
+
 /**
  * \brief StupidFS Superblock
  */
 struct stpdfs_sb {
-	uint32_t magic;
+	uint32_t magic; /**< MUST be \ref STPDFS_SB_MAGIC */
 	uint32_t isize; /**< size in block of the I list */
 	uint32_t fsize; /**< size in block of the entire volume */
 	uint32_t free[100];
 	uint8_t nfree; /**< number of free block (0-100) */
-	uint8_t flock;
-	uint8_t ilock;
-	uint8_t fmod;
-	uint64_t time;
+	uint8_t revision; /**< MUST be \ref STPDFS_SB_REV */
+	uint16_t state; /**<  \see stpdfs_state */
+	uint64_t time; /**< last time the superblock was modified */
 } __attribute__((packed));
+
+#define STPDFS_SB_SIZE sizeof(struct stpdfs_sb)
 
 /**
  * \brief StupidFS I-node
  */
 struct stpdfs_inode {
 	uint16_t mode; /**< file mode */
-	uint8_t nlink; /**< link count */
-	uint8_t uid;   /**< owner user id */
-	uint8_t gid;   /**< group id */
+	uint16_t nlink; /**< link count */
+	uint16_t uid;   /**< owner user id */
+	uint16_t gid;   /**< group id */
+	uint16_t flags;
 	uint32_t size;
 	uint32_t zones[10];
-	uint32_t actime[2];
-	uint32_t modtime[2];
+	uint64_t actime;
+	uint64_t modtime;
 } __attribute__((packed));
 
-#define INODE_SIZE sizeof(struct inode)
+#define STPDFS_INODE_SIZE sizeof(struct inode)
 
-struct file {
+struct stpdfs_dirent {
 	uint32_t inode;
-	char filename[32];
+	char filename[STPDFS_NAME_MAX];
 };
+
+/*
+ * API
+ */
+
+size_t stpdfs_write(int fd, uint32_t blocknum, void *data, size_t size);
+size_t stpdfs_read(int fd, uint32_t blocknum, void *data, size_t size);
+
+/* superblock.c */
+int stpdfs_superblock_valid(const struct stpdfs_sb *sb);
+int stpdfs_read_superblock(int fd, struct stpdfs_sb *sb);
+
 
 #endif /* !STPDFS_H */

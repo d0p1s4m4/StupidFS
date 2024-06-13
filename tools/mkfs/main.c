@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include <stpdfs.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -73,12 +74,39 @@ write_block(int fd, void *data, size_t size)
 	return (write(fd, buffer, STPDFS_BLOCK_SIZE) == STPDFS_BLOCK_SIZE); 
 }
 
+static void
+add_free_block(int fd, int num)
+{
+	struct stpdfs_free copy;
+
+	if (super.nfree == 100)
+	{
+		memcpy(&copy, super.free, sizeof(uint32_t) * 100);
+		copy.nfree = super.nfree;
+		lseek(fd, num * STPDFS_BLOCK_SIZE, SEEK_SET);
+		write_block(fd, &copy, sizeof(struct stpdfs_free));
+		super.nfree = 1;
+		super.free[0] = num;
+	}
+	else
+	{
+		super.free[super.nfree++] = num;
+	}
+}
+
+
 static int
 mkfs()
 {
 	struct stat statbuf;
+	struct stpdfs_dirent rootdirent[2];
 	int fd;
 	int dev_block;
+	int idx;
+	struct stpdfs_inode inds[STPDFS_INODES_PER_BLOCK];
+	struct stpdfs_free freebuff;
+	int freeblock;
+	int nextfree;
 
 	if (stat(device, &statbuf) < 0)
 	{
@@ -115,12 +143,45 @@ mkfs()
 	write_block(fd, NULL, 0);
 
 	super.magic = STPDFS_SB_MAGIC;
+	super.revision = STPDFS_SB_REV;
 	super.isize = inodes / STPDFS_INODES_PER_BLOCK;
 	super.fsize = blocks;
+	super.nfree = 0;
 
+	/* write inodes */
+	lseek(fd, 2 * STPDFS_BLOCK_SIZE, SEEK_SET);
+	memset(&inds, 0, sizeof(struct stpdfs_inode) * STPDFS_INODES_PER_BLOCK);
+	inds[1].modtime = time(NULL);
+	inds[1].actime = time(NULL);
+	inds[1].size = sizeof(struct stpdfs_dirent) * 2;
+	inds[1].flags = STPDFS_INO_FLAG_ALOC;
+	inds[1].mode = STPDFS_S_IFDIR;
+	write_block(fd, &inds, sizeof(struct stpdfs_inode) * STPDFS_INODES_PER_BLOCK);
+	memset(&inds, 0, sizeof(struct stpdfs_inode) * STPDFS_INODES_PER_BLOCK);
+
+	for (idx = 1; idx < super.isize; idx++)
+	{
+		write_block(fd, &inds, sizeof(struct stpdfs_inode) * STPDFS_INODES_PER_BLOCK);
+	}
+
+	freeblock = blocks - (inodes + 2);
+	for (nextfree = super.isize + 3; nextfree < freeblock; nextfree++)
+	{
+		add_free_block(fd, nextfree);
+	}
+
+	strcpy(rootdirent[0].filename, ".");
+	rootdirent[1].inode = 1;
+	strcpy(rootdirent[1].filename, "..");
+	rootdirent[1].inode = 1;
+
+	/* write super block */
+	lseek(fd, 1 * STPDFS_BLOCK_SIZE, SEEK_SET);
 	super.time = time(NULL);
-
+	super.state = STPDFS_CLEANLY_UNMOUNTED;
 	write_block(fd, &super, sizeof(struct stpdfs_sb));
+
+	printf("StupidFS: %u blocks (%u Inodes)\n", super.fsize, super.isize);
 
 	close(fd);
 

@@ -31,3 +31,5 @@ Debug/
 html/
 .dirstamp
 mkfs.stpd
+*.gz
+*.pdf
