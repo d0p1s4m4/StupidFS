@@ -11,7 +11,7 @@ base64_encode(char *dest, const char *src, size_t srclen)
 	uint8_t a, b, c;
 	uint32_t triple;
 
-	encodedlen = 4 * ((srclen + 2) / 3) + 4;
+	encodedlen = 4 * ((srclen + 2) / 3);
 
 	if (dest == NULL)
 	{
@@ -39,5 +39,6 @@ base64_encode(char *dest, const char *src, size_t srclen)
 			dest[encodedlen - 2] = '='; 
 		}
 	}
+	dest[encodedlen] = 0;
 	return (encodedlen);
 }

@@ -1,4 +1,4 @@
-SUBDIRS = lib tools
+SUBDIRS = lib tools tests
 
 if BUILD_FUSE
 SUBDIRS  += fuse
