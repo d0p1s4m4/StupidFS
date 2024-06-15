@@ -1,4 +1,5 @@
 AM_CFLAGS = -I$(top_srcdir)/lib -I$(top_srcdir)
+LDADD = ../lib/libstpdfs.a
 
 bin_PROGRAMS = mkfs.stpd
 

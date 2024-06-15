@@ -8,6 +8,8 @@
 # define STPDFS_SB_REV   STPDFS_SB_REV_1
 # define STPDFS_SB_REV_1 1
 
+# define STPDFS_INO_ROOTDIR 1
+
 # define STPDFS_BLOCK_SIZE_BITS 9
 # define STPDFS_BLOCK_SIZE (1 << STPDFS_BLOCK_SIZE_BITS)
 
@@ -35,7 +37,8 @@ struct stpdfs_free {
 
 enum stpdfs_state {
 	STPDFS_CLEANLY_UNMOUNTED = 0,
-	STPDFS_ERROR             = 1
+	STPDFS_ERROR             = 1,
+	STPDFS_DIRTY             = 1,
 };
 
 /**
@@ -83,9 +86,14 @@ struct stpdfs_dirent {
 size_t stpdfs_write(int fd, uint32_t blocknum, void *data, size_t size);
 size_t stpdfs_read(int fd, uint32_t blocknum, void *data, size_t size);
 
+uint32_t stpdfs_alloc_block(int fd, struct stpdfs_sb *sb);
+int stpdfs_free_block(int fd, struct stpdfs_sb *sb, uint32_t blocknum);
+
 /* superblock.c */
 int stpdfs_superblock_valid(const struct stpdfs_sb *sb);
 int stpdfs_read_superblock(int fd, struct stpdfs_sb *sb);
 
+/* inode.c */
+uint32_t stpdfd_alloc_inode(int fd, struct stpdfs_sb *sb);
 
 #endif /* !STPDFS_H */
