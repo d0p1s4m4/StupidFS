@@ -10,8 +10,8 @@ void
 lzp_compress(uint8_t *out, size_t *outsz, const uint8_t *in, size_t insz)
 {
 	uint8_t c;
-	uint16_t hash = 0;
-	uint32_t mask = 0;
+	uint16_t hash;
+	uint32_t mask;
 	uint8_t table[LZP_HASH_SIZE] = { 0 };
 	size_t i, j;
 	size_t inpos;
@@ -20,9 +20,11 @@ lzp_compress(uint8_t *out, size_t *outsz, const uint8_t *in, size_t insz)
 
 	inpos = 0;
 	outpos = 0;
+	hash = 0;
 	while (inpos < insz)
 	{
 		j = 1;
+		mask = 0;
 		for (i = 0; i < 8; i++)
 		{
 			if (inpos >= insz)
