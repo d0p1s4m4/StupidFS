@@ -33,3 +33,7 @@ html/
 mkfs.stpd
 *.gz
 *.pdf
+test_lzp
+test_base64
+*.trs
+stpdfs-fuse

@@ -45,6 +45,7 @@ AC_CHECK_FUNCS(m4_normalize([
 AC_CONFIG_FILES([Makefile
 				lib/Makefile
 				tools/Makefile
+				tests/Makefile
 				linux/Makefile
 				fuse/Makefile])
 

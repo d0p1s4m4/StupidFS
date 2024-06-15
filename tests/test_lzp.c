@@ -10,6 +10,7 @@ void lzp_decompress(uint8_t *out, size_t *outsz, const uint8_t *in, size_t insz)
 static const char uncompress_data[298] =  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 									 "abcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabc"
 									 "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccabcabcabcabcabcabcabcabcabcabcabcabcabcabc";
+
 static void
 test_lzp(void **state)
 {
@@ -18,6 +19,8 @@ test_lzp(void **state)
 	size_t outsz;
 
 	lzp_compress(compressed, &outsz, (uint8_t *)uncompress_data, 298);
+	assert_true(outsz < 298);
+
 	lzp_decompress((uint8_t *)result, &outsz, compressed, outsz);
 
 	assert_int_equal(298, outsz);
