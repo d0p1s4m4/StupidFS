@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -15,6 +16,18 @@
 #ifdef HAVE_LIBGEN_H
 # include <libgen.h>
 #endif /* HAVE_LIBGEN_H */
+
+static struct path {
+	char *name;
+
+	uint32_t inode;
+
+	size_t child_count;
+	struct path *child;
+
+} root_path = {
+	"/", 1, 0, NULL
+};
 
 static const char *prg_name;
 static int fd = -1;
@@ -54,7 +67,7 @@ fuse_stpdfs_init(struct fuse_conn_info *conn,
 	}
 
 	stpdfs_read(fd, 1, &sb, sizeof(struct stpdfs_sb));
-	printf("StupidFS last opened: %s\n", asctime(localtime(&sb.time)));
+
 	return (NULL);
 }
 
@@ -76,6 +89,26 @@ static int
 fuse_stpdfs_getattr(const char *path, struct stat *stbuf,
 				struct fuse_file_info *fi)
 {
+	struct stpdfs_inode inodes[STPDFS_INODES_PER_BLOCK];
+	struct stpdfs_inode inode;
+	size_t idx;
+	uint32_t ino;
+
+	char *p = strtok(path, "/");
+	stpdfs_read(fd, 2, &inodes, sizeof(struct stpdfs_inode) * STPDFS_INODES_PER_BLOCK);
+	inode = inodes[1];
+
+	if (p != NULL)
+	{
+		// todo
+	}
+
+	stbuf->st_atim.tv_sec = inode.actime;
+	stbuf->st_mtim.tv_sec = inode.modtime;
+	stbuf->st_size = inode.size;
+	stbuf->st_mode = inode.mode;
+	stbuf->st_gid = inode.gid;
+	stbuf->st_uid = inode.uid;
 	return (0);
 }
 
@@ -145,7 +178,14 @@ main(int argc, char *argv[])
 	if (options.show_version) show_version();
 	if (options.show_help) show_help();
 
-	if (options.filename == NULL) show_help();
+	if (options.filename)
+	{
+		options.filename = realpath(options.filename, NULL);
+	}
+	else
+	{
+		show_help();
+	}
 
 	ret = fuse_main(args.argc, args.argv, &stpdfs_oper, NULL);
 	fuse_opt_free_args(&args);

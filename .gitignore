@@ -37,3 +37,5 @@ test_lzp
 test_base64
 *.trs
 stpdfs-fuse
+test_hchacha
+test_xchacha

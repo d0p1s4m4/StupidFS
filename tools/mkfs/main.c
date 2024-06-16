@@ -158,6 +158,7 @@ mkfs()
 	rootdirent[1].inode = 1;
 	strcpy(rootdirent[1].filename, "..");
 	rootdirent[1].inode = 1;
+	inds[STPDFS_INO_ROOTDIR].nlink += 2;
 	stpdfs_write(fd, inds[STPDFS_INO_ROOTDIR].zones[0], rootdirent, sizeof(struct stpdfs_dirent) * 2);
 	stpdfs_write(fd, 2, &inds, sizeof(struct stpdfs_inode) * STPDFS_INODES_PER_BLOCK);
 

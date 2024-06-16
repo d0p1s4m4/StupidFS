@@ -1,13 +1,11 @@
-#include <string.h>
 #include <endian.h>
 #include <stdint.h>
-#include <string.h>
 #include "chacha.h"
 
 void
 hchacha(uint8_t out[HCHACHA_OUT_BYTES],
-		const uint8_t key[HCHACHA_KEY_BYTES],
-		const uint8_t nonce[HCHACHA_NONCE_BYTES],
+		const uint8_t key[CHACHA_KEY_BYTES],
+		const uint8_t nonce[CHACHA_NONCE_BYTES],
 		int round)
 {
 	int idx;
@@ -60,8 +58,8 @@ hchacha(uint8_t out[HCHACHA_OUT_BYTES],
 
 void
 hchacha12(uint8_t out[HCHACHA_OUT_BYTES],
-		const uint8_t key[HCHACHA_KEY_BYTES],
-		const uint8_t nonce[HCHACHA_NONCE_BYTES])
+		const uint8_t key[CHACHA_KEY_BYTES],
+		const uint8_t nonce[CHACHA_NONCE_BYTES])
 {
 	return (hchacha(out, key, nonce, 12));
 }

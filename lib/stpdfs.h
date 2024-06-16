@@ -19,9 +19,10 @@
 
 # define STPDFS_ROOT_INO 1
 
-# define STPDFS_INO_FLAG_ALOC (1 << 15)
-# define STPDFS_INO_FLAG_LZP  (1 << 0)
-# define STPDFS_INO_FLAG_ENC  (1 << 1)
+# define STPDFS_INO_FLAG_ALOC   (1 << 15)
+# define STPDFS_INO_FLAG_LARGE  (1 << 0)
+# define STPDFS_INO_FLAG_LZP    (1 << 1)
+# define STPDFS_INO_FLAG_ENC    (1 << 2)
 
 # define STPDFS_S_IFMT   0xF000
 # define STPDFS_S_IFSOCK 0xA000
