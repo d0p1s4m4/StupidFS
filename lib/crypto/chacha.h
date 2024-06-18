@@ -18,7 +18,8 @@
 
 # define HCHACHA_OUT_BYTES   32
 # define CHACHA_KEY_BYTES    32
-# define CHACHA_NONCE_BYTES  16
+# define CHACHA_NONCE_BYTES  12
+# define HCHACHA_NONCE_BYTES 16
 # define CHACHA_BLOCK_BYTES  64
 
 # define TO_LE_32(x) ((x)[0]) | ((x)[1] << 8) | ((x)[2] << 16) | ((x)[3] << 24)
@@ -31,6 +32,9 @@ struct chacha_ctx {
 void
 hchacha(uint8_t out[HCHACHA_OUT_BYTES],
 		const uint8_t key[CHACHA_KEY_BYTES],
-		const uint8_t nonce[CHACHA_NONCE_BYTES], int round);
+		const uint8_t nonce[HCHACHA_NONCE_BYTES], int round);
+void
+xchacha12(uint8_t *out, uint8_t key[CHACHA_KEY_BYTES], uint8_t nonce[24],
+		uint8_t *in, size_t inlen);
 
 #endif /* STPDFS_CRYPTO_CHACHA_H */

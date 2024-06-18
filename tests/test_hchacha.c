@@ -11,7 +11,7 @@
 void
 hchacha(uint8_t out[HCHACHA_OUT_BYTES],
 		const uint8_t key[CHACHA_KEY_BYTES],
-		const uint8_t nonce[CHACHA_NONCE_BYTES],
+		const uint8_t nonce[HCHACHA_NONCE_BYTES],
 		int round);
 
 uint8_t key[CHACHA_KEY_BYTES] = {
@@ -20,7 +20,7 @@ uint8_t key[CHACHA_KEY_BYTES] = {
     0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f
 };
 
-uint8_t nonce[CHACHA_NONCE_BYTES] = {
+uint8_t nonce[HCHACHA_NONCE_BYTES] = {
 	0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x4a, 0x00, 0x00, 0x00, 0x00, 0x31, 0x41, 0x59, 0x27
 };
 

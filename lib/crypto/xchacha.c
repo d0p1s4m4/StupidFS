@@ -1,5 +1,13 @@
-
-#include <endian.h>
+#ifdef _WIN32
+# include <sys/param.h>
+# if BYTE_ORDER == LITTLE_ENDIAN
+#  define htole32(x) (x)
+# else
+#  define htole32(x) __builtin_bswap32(x)
+# endif
+#else
+# include <endian.h>
+#endif /* _WIN32 */
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
