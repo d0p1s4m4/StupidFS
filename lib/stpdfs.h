@@ -16,6 +16,7 @@
 # define STPDFS_NAME_MAX 28
 
 # define STPDFS_INODES_PER_BLOCK (STPDFS_BLOCK_SIZE / (sizeof(struct stpdfs_inode)))
+# define STPDFS_DIRENT_PER_BLOCK (STPDFS_BLOCK_SIZE / (sizeof(struct stpdfs_dirent)))
 
 # define STPDFS_ROOT_INO 1
 
@@ -96,5 +97,7 @@ int stpdfs_read_superblock(int fd, struct stpdfs_sb *sb);
 
 /* inode.c */
 uint32_t stpdfd_alloc_inode(int fd, struct stpdfs_sb *sb);
+int stpdfs_read_inode(int fd, uint32_t inodenum, struct stpdfs_inode *ino);
+int stpdfs_write_inode(int fd, uint32_t inodenum, const struct stpdfs_inode *inode);
 
 #endif /* !STPDFS_H */

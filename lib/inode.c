@@ -9,14 +9,28 @@ stpdfs_locate_inode(uint32_t inode)
 }
 
 int
-stpdfs_read_inode()
+stpdfs_read_inode(int fd, uint32_t inodenum, struct stpdfs_inode *ino)
 {
+	struct stpdfs_inode inodes[STPDFS_INODES_PER_BLOCK];
+
+	stpdfs_read(fd, 2 + inodenum / STPDFS_INODES_PER_BLOCK, (uint8_t *)&inodes, sizeof(struct stpdfs_inode) * STPDFS_INODES_PER_BLOCK);
+
+	memcpy(ino, &inodes[inodenum % STPDFS_INODES_PER_BLOCK], sizeof(struct stpdfs_inode));
+	
 	return (0);
 }
 
 int
-stpdfs_write_inode()
+stpdfs_write_inode(int fd, uint32_t inodenum, const struct stpdfs_inode *inode)
 {
+	struct stpdfs_inode inodes[STPDFS_INODES_PER_BLOCK];
+
+	stpdfs_read(fd, 2 + inodenum / STPDFS_INODES_PER_BLOCK, (uint8_t *)&inodes, sizeof(struct stpdfs_inode) * STPDFS_INODES_PER_BLOCK);
+
+	memcpy(&inodes[inodenum % STPDFS_INODES_PER_BLOCK], inode, sizeof(struct stpdfs_inode));
+
+	stpdfs_write(fd, 2 + inodenum / STPDFS_INODES_PER_BLOCK, (uint8_t *)&inodes, sizeof(struct stpdfs_inode) * STPDFS_INODES_PER_BLOCK);
+	
 	return (0);
 }
 

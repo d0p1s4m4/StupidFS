@@ -2,6 +2,7 @@
 # define STPDFS_CRYPTO_CHACHA_H 1
 
 # include <stdint.h>
+# include <stddef.h>
 
 # define CHACHA_CONST1 "expa"
 # define CHACHA_CONST2 "nd 3"

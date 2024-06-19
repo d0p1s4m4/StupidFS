@@ -62,6 +62,8 @@
 
 	\mainmatter
 
+	\chapter{File, file system, and memory size limits}
+
 	\chapter{Magic Numbers}
 
 	\begin{center}
@@ -69,16 +71,33 @@
  			\hline
  			\textbf{Flag} & \textbf{Hexadecimal} & \textbf{ASCII} & \textbf{Data structure}  \\ 
 			\hline
- 			STPDFS\_SB\_MAGIC & 0x44505453 & STPD & Superblock \\ 
+ 			STPDFS\_SB\_MAGIC & 0x44505453 & STPD & Superblock \\
+			STDFS\_BLOCK\_SIZE & 512 & &  Block size\\ 
  			\hline
 		\end{tabular}
 	\end{center}
 
 	\chapter{Structures}
 
-	\section{Superblocks}
+	\section{Superblock}
+
+	\subsection{free list}
 
 	\begin{lstlisting}[language=C]
+struct stpdfs_free {
+	uint32_t free[100];
+	uint8_t nfree;
+};
+	\end{lstlisting}
+
+	\subsection{superblock}
+
+	\begin{lstlisting}[language=C]
+
+#define STPDFS_SB_MAGIC 0x44505453
+#define STPDFS_REV      STPDFS_REV_1
+#define STPDFS_REV_1    0x1
+
 struct stpdfs_sb {
 	uint32_t magic;
 	uint32_t isize;
@@ -86,7 +105,7 @@ struct stpdfs_sb {
 	uint32_t free[100];
 	uint8_t nfree;
 	uint8_t revision;
-	uint8_t state;
+	uint16_t state;
 	uint64_t time;
 };
 	\end{lstlisting}
@@ -106,6 +125,46 @@ struct inode {
 	uint64_t modtime;
 };
 	\end{lstlisting}
+	
+	\subsection{flags}
+
+	\begin{center}
+		\begin{tabular}{ |c|c|c|c| } 
+ 			\hline
+	 		\textbf{flags} & \textbf{value} & \textbf{Description}  \\ 
+			\hline
+			STPDFS\_INODE\_ALLOCATED & 1 << 15 & if set inode is allocated \\
+			STPDFS\_INODE\_LARGE\_FILE & 1 << 0 & \\
+			STPDFS\_INODE\_LZP & 1 << 1 & if set data are compressed \\
+			STPDFS\_INODE\_ENC &  1 << 2 & if set data are encrypted \\
+ 		\hline
+		\end{tabular}
+	\end{center}
+
+	\begin{center}
+		\begin{tabular}{ |c|c| }
+			zone 0-6 & direct \\
+			zone 7 & indirect \\
+			zone 8 & double indirect \\
+			zone 9 & triple indirect \\
+		\end{tabular}
+	\end{center}
+
+	\subsection{mode}
+
+	\begin{center}
+		\begin{tabular}{ |c|c|c|c| } 
+ 			\hline
+ 			\textbf{mode} & \textbf{value} & \textbf{Description}  \\ 
+			 STPDFS\_S\_IFSOCK & 0xA000 & \\
+			STPDFS\_S\_IFLNK  & 0xC000 & \\
+			STPDFS\_S\_IFREG & 0x8000 & \\
+			STPDFS\_S\_IFBLK  & 0x6000 & \\
+			STPDFS\_S\_IFDIR &  0x4000 & \\
+ 			\hline
+		\end{tabular}
+	\end{center}
+
 	\appendix
 
 \end{document}
