@@ -109,6 +109,7 @@ fuse_stpdfs_getattr(const char *path, struct stat *stbuf,
 	stbuf->st_mode = inode.mode;
 	stbuf->st_gid = inode.gid;
 	stbuf->st_uid = inode.uid;
+	stbuf->st_nlink = inode.nlink;
 	return (0);
 }
 

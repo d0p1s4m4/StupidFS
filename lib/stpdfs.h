@@ -13,7 +13,7 @@
 # define STPDFS_BLOCK_SIZE_BITS 9
 # define STPDFS_BLOCK_SIZE (1 << STPDFS_BLOCK_SIZE_BITS)
 
-# define STPDFS_NAME_MAX 28
+# define STPDFS_NAME_MAX 255
 
 # define STPDFS_INODES_PER_BLOCK (STPDFS_BLOCK_SIZE / (sizeof(struct stpdfs_inode)))
 # define STPDFS_DIRENT_PER_BLOCK (STPDFS_BLOCK_SIZE / (sizeof(struct stpdfs_dirent)))
@@ -32,6 +32,12 @@
 # define STPDFS_S_IFBLK  0x6000
 # define STPDFS_S_IFDIR  0x4000
 
+typedef uint32_t zone_t; /**< zone number */
+typedef uint32_t block_t; /**< block number */
+
+/**
+ * \brief free block list
+ */
 struct stpdfs_free {
 	uint32_t free[100];
 	uint8_t nfree;
@@ -88,7 +94,23 @@ struct stpdfs_dirent {
 size_t stpdfs_write(int fd, uint32_t blocknum, void *data, size_t size);
 size_t stpdfs_read(int fd, uint32_t blocknum, void *data, size_t size);
 
+
+/**
+  * mark block as available for new allocation.
+  * 
+  * \param fd file descriptor.
+  * \param sb pointer to \ref stpdfs_sb.
+  * \param blocknum block to free
+  */
 uint32_t stpdfs_alloc_block(int fd, struct stpdfs_sb *sb);
+
+/**
+  * find a free block.
+  *
+  * \param fd file descriptor.
+  * \param sb pointer to \ref stpdfs_sb.
+  * \return block number or 0 if no block found.
+  */
 int stpdfs_free_block(int fd, struct stpdfs_sb *sb, uint32_t blocknum);
 
 /* superblock.c */

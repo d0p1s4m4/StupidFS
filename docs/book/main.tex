@@ -134,9 +134,8 @@ struct inode {
 	 		\textbf{flags} & \textbf{value} & \textbf{Description}  \\ 
 			\hline
 			STPDFS\_INODE\_ALLOCATED & 1 << 15 & if set inode is allocated \\
-			STPDFS\_INODE\_LARGE\_FILE & 1 << 0 & \\
-			STPDFS\_INODE\_LZP & 1 << 1 & if set data are compressed \\
-			STPDFS\_INODE\_ENC &  1 << 2 & if set data are encrypted \\
+			STPDFS\_INODE\_LZP & 1 << 0 & if set data are compressed \\
+			STPDFS\_INODE\_ENC &  1 << 1 & if set data are encrypted \\
  		\hline
 		\end{tabular}
 	\end{center}
@@ -156,7 +155,7 @@ struct inode {
 		\begin{tabular}{ |c|c|c|c| } 
  			\hline
  			\textbf{mode} & \textbf{value} & \textbf{Description}  \\ 
-			 STPDFS\_S\_IFSOCK & 0xA000 & \\
+			STPDFS\_S\_IFSOCK & 0xA000 & \\
 			STPDFS\_S\_IFLNK  & 0xC000 & \\
 			STPDFS\_S\_IFREG & 0x8000 & \\
 			STPDFS\_S\_IFBLK  & 0x6000 & \\
