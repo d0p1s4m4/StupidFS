@@ -1,16 +1,9 @@
 # StupidFS
 
-```mermaid
-block-beta
-  block
-          a["boot block"]
-          b["super block"]
-          c["inodes"]
-          d["inodes"]
-          f["data"]
-          g["data"]
-          h["data"]
-  end
+```
+  ┌──────────┬───────────┬──────┬───┬──────┬────┬───┬────┐
+  │Boot block│Super block│Inodes│...│Inodes│Data│...│Data│
+  └──────────┴───────────┴──────┴───┴──────┴────┴───┴────┘
 ```
 
 ```mermaid
