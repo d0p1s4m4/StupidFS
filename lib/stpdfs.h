@@ -1,3 +1,14 @@
+/**
+ * \file stpdfs.h
+ *
+ * StupidFS
+ * ```
+ * ┌──────────┬───────────┬──────┬───┬──────┬────┬───┬────┐
+ * │Boot block│Super block│Inodes│...│Inodes│Data│...│Data│
+ * └──────────┴───────────┴──────┴───┴──────┴────┴───┴────┘
+ * ```
+ */
+#include <cstdint>
 #ifndef STPDFS_H
 # define STPDFS_H 1
 
@@ -13,7 +24,7 @@
 # define STPDFS_BLOCK_SIZE_BITS 9
 # define STPDFS_BLOCK_SIZE (1 << STPDFS_BLOCK_SIZE_BITS)
 
-# define STPDFS_NAME_MAX 255
+# define STPDFS_NAME_MAX 28
 
 # define STPDFS_INODES_PER_BLOCK (STPDFS_BLOCK_SIZE / (sizeof(struct stpdfs_inode)))
 # define STPDFS_DIRENT_PER_BLOCK (STPDFS_BLOCK_SIZE / (sizeof(struct stpdfs_dirent)))
@@ -34,12 +45,36 @@
 
 typedef uint32_t zone_t; /**< zone number */
 typedef uint32_t block_t; /**< block number */
+typedef uint32_t ino_t;
 
 /**
  * \brief free block list
+ * ```
+ * ┌──────────┐                                                           
+ * │ block 99 │                              
+ * ├──────────┤                              
+ * │ block 98 │                              
+ * ├──────────┤                              
+ * │ ...      │                              
+ * ├──────────┤                              
+ * │ block 2  │                              
+ * ├──────────┤                              
+ * │ block 1  │                              
+ * ├──────────┤    ┌──────────┐              
+ * │ block 0  ├───►│ block 99 │              
+ * └──────────┘    ├──────────┤              
+ *                 │ ...      │              
+ *                 ├──────────┤   ┌──────────┐
+ *                 │ block 0  ├──►│ block 99 │
+ *                 └──────────┘   ├──────────┤
+ *                                │ ...      │
+ *                                ├──────────┤
+ *                                │ block 0  │
+ *                                └──────────┘ 
+ * ```
  */
 struct stpdfs_free {
-	uint32_t free[100];
+	block_t free[100];
 	uint8_t nfree;
 } __attribute__((packed));
 
@@ -56,8 +91,7 @@ struct stpdfs_sb {
 	uint32_t magic; /**< MUST be \ref STPDFS_SB_MAGIC */
 	uint32_t isize; /**< size in block of the I list */
 	uint32_t fsize; /**< size in block of the entire volume */
-	uint32_t free[100];
-	uint8_t nfree; /**< number of free block (0-100) */
+	struct stpdfs_free freelist; /**< \see stpdfs_free */
 	uint8_t revision; /**< MUST be \ref STPDFS_SB_REV */
 	uint16_t state; /**<  \see stpdfs_state */
 	uint64_t time; /**< last time the superblock was modified */
@@ -75,7 +109,7 @@ struct stpdfs_inode {
 	uint16_t gid;   /**< group id */
 	uint16_t flags;
 	uint32_t size;
-	uint32_t zones[10];
+	zone_t zones[10];
 	uint64_t actime;
 	uint64_t modtime;
 } __attribute__((packed));
@@ -83,7 +117,7 @@ struct stpdfs_inode {
 #define STPDFS_INODE_SIZE sizeof(struct inode)
 
 struct stpdfs_dirent {
-	uint32_t inode;
+	ino_t inode;
 	char filename[STPDFS_NAME_MAX];
 };
 
