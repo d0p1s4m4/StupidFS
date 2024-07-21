@@ -5,7 +5,7 @@
 #include <cmocka.h>
 #include <string.h>
 
-#include <crypto/chacha.h>
+#include "chacha.h"
 
 void xchacha(uint8_t *out, uint8_t key[CHACHA_KEY_BYTES], uint8_t nonce[24],
 		uint8_t *in, size_t inlen, int round);

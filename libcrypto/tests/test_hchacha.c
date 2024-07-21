@@ -4,7 +4,7 @@
 #include <setjmp.h>
 #include <cmocka.h>
 
-#include <crypto/chacha.h>
+#include "chacha.h"
 
 /* test from https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-xchacha-03#section-2.2  */
 

@@ -1,0 +1,4 @@
+-I.
+-I/usr/include/fuse3
+-Ilib
+-DHAVE_CONFIG_H

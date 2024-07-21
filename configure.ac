@@ -13,6 +13,10 @@ AM_PROG_AR
 AC_PROG_INSTALL
 AC_PROG_RANLIB
 AM_PROG_CC_C_O
+AC_CHECK_PROG([NASM], [nasm], [nasm])
+AS_IF([test -z "$NASM"], [
+	AC_MSG_ERROR([nasm is required])
+])
 
 AC_CONFIG_HEADERS([config.h])
 
@@ -21,7 +25,7 @@ AS_IF([ test "x$host_os" != "xmingw32" ], [
 ])
 
 AM_CONDITIONAL(BUILD_FUSE, test "x$host_os" != "xmingw32")
-AM_CONDITIONAL(BUILD_LINUX, test "x$host_os" = "xlinux")
+AM_CONDITIONAL(BUILD_LINUX, test "x$host_os" = "xlinux-gnu")
 
 
 AC_CHECK_INCLUDES_DEFAULT
@@ -44,8 +48,12 @@ AC_CHECK_FUNCS(m4_normalize([
 
 AC_CONFIG_FILES([Makefile
 				lib/Makefile
+				libcrypto/Makefile
+				libcrypto/tests/Makefile
+				liblzp/Makefile
+				liblzp/tests/Makefile
+				libstpdfs/Makefile
 				tools/Makefile
-				tests/Makefile
 				linux/Makefile
 				fuse/Makefile])
 

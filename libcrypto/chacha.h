@@ -1,5 +1,8 @@
-#ifndef STPDFS_CRYPTO_CHACHA_H
-# define STPDFS_CRYPTO_CHACHA_H 1
+/**
+ * \file chacha.h
+ */
+#ifndef CHACHA_H
+# define CHACHA_H 1
 
 # include <stdint.h>
 # include <stddef.h>
@@ -38,4 +41,4 @@ void
 xchacha12(uint8_t *out, uint8_t key[CHACHA_KEY_BYTES], uint8_t nonce[24],
 		uint8_t *in, size_t inlen);
 
-#endif /* STPDFS_CRYPTO_CHACHA_H */
+#endif /* CHACHA_H */

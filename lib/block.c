@@ -42,13 +42,13 @@ stpdfs_alloc_block(int fd, struct stpdfs_sb *sb)
 
 	sb->state = STPDFS_DIRTY; /* mark state dirty */
 redo:
-	sb->nfree--;
-	blocknum = sb->free[sb->nfree];
-	if (sb->nfree == 0 && blocknum != 0)
+	sb->freelist.nfree--;
+	blocknum = sb->freelist.free[sb->freelist.nfree];
+	if (sb->freelist.nfree == 0 && blocknum != 0)
 	{
 		stpdfs_read(fd, blocknum, &freelist, sizeof(struct stpdfs_free));
-		memcpy(sb->free, &freelist, sizeof(uint32_t) * 100);
-		sb->nfree = freelist.nfree;
+		memcpy(sb->freelist.free, &freelist, sizeof(uint32_t) * 100);
+		sb->freelist.nfree = freelist.nfree;
 		goto redo;
 	}
 
@@ -69,19 +69,19 @@ stpdfs_free_block(int fd, struct stpdfs_sb *sb, uint32_t blocknum)
 
 	sb->state = STPDFS_DIRTY; /* mark state dirty */
 
-	if (sb->nfree == 100)
+	if (sb->freelist.nfree == 100)
 	{
-		memcpy(&copy, sb->free, sizeof(uint32_t) * 100);
-		copy.nfree = sb->nfree;
+		memcpy(&copy, sb->freelist.free, sizeof(uint32_t) * 100);
+		copy.nfree = sb->freelist.nfree;
 
 		stpdfs_write(fd, blocknum, &copy, sizeof(struct stpdfs_free));
 
-		sb->nfree = 1;
-		sb->free[0] = blocknum;
+		sb->freelist.nfree = 1;
+		sb->freelist.free[0] = blocknum;
 	}
 	else
 	{
-		sb->free[sb->nfree++] = blocknum;
+		sb->freelist.free[sb->freelist.nfree++] = blocknum;
 	}
 
 	sb->time = time(NULL);

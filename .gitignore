@@ -39,3 +39,10 @@ test_base64
 stpdfs-fuse
 test_hchacha
 test_xchacha
+tools.stpd
+test-driver 
+config.sub
+*~
+hdd
+config.h
+*.guess

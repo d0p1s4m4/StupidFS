@@ -1,4 +1,4 @@
-SUBDIRS = lib tools tests
+SUBDIRS = lib libcrypto liblzp tools
 
 if BUILD_FUSE
 SUBDIRS  += fuse

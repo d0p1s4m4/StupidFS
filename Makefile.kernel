@@ -1,5 +1,6 @@
-obj-m=$(module_DATA)
-MI_OBJS      = $(module_DATA)
+obj-m += stpdfs.o
+stpdfs-objs := $(module_DATA)
+MI_OBJS     = $(module_DATA)
 
 all clean:
 	mv Makefile.automake Makefile

@@ -1,82 +1,180 @@
 #include "stpdfs.h"
+#include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
-static void
-write_indirect(int fd, struct stpdfs_sb *sb, struct stpdfs_inode *inode, size_t zone, uint8_t *buffer, size_t size)
+
+static int
+stpdfs_write_indirect(int fd, uint32_t blocknum, uint8_t *buffer, size_t size)
 {
+	size_t i;
+	uint32_t zones[STPDFS_ZONES_PER_BLOCK];
+	size_t byte_read;
 
-}
+	stpdfs_read(fd, blocknum, zones, sizeof(zones));
 
-static void
-write_zone(int fd, struct stpdfs_sb *sb, struct stpdfs_inode *inode, size_t zone, uint8_t *buffer, size_t size)
-{
-	uint32_t zones[128];
-
-	if (zone < 7)
+	byte_read = 0;
+	for (i = 0; i < STPDFS_ZONES_PER_BLOCK; i++)
 	{
-		if (inode->zones[zone] == 0)
-		{
-			inode->zones[zone] = stpdfs_alloc_block(fd, sb);
-		}
-		stpdfs_write(fd, inode->zones[zone], buffer, size);
+		stpdfs_read(fd, zones[i], buffer, STPDFS_BLOCK_SIZE);
+		byte_read += STPDFS_BLOCK_SIZE;
 
-		return;
-	}
-	
-	if (zone < 135)
-	{
-		if (inode->zones[7] == 0)
+		if (byte_read >= size)
 		{
-			inode->zones[7] = stpdfs_alloc_block(fd, sb);
-			memset(zones, 0, 512);
-			stpdfs_write(fd, inode->zones[7], zones, 512);
+			return (byte_read);
 		}
-
-		stpdfs_read(fd, inode->zones[7], zones, 512);
-		if (zones[zone - 7] == 0)
-		{
-			zones[zone - 7] = stpdfs_alloc_block(fd, sb);
-			stpdfs_write(fd, inode->zones[7], zones, 512);
-		}
-
-		stpdfs_write(fd, zones[zone - 7], buffer, size);
-		
-		return;
 	}
 
-	if (zone < 16519)
-	{
-		if (inode->zones[8] == 0)
-		{
-			inode->zones[8] = stpdfs_alloc_block(fd, sb);
-			memset(zones, 0, 512);
-			stpdfs_write(fd, inode->zones[7], zones, 512);
-		}
-		stpdfs_read(fd, inode->zones[8], zones, 512);
-
-		if (zones[(zone - 135) / 128] == 0)
-		{
-			zones[(zone - 135) / 128] = stpdfs_alloc_block(fd, sb);
-		}
-	}
+	return (byte_read);
 }
 
 int
-stpdfs_write_data(int fd, struct stpdfs_sb *sb, struct stpdfs_inode *inode, uint8_t *buffer, size_t size)
+stpdfs_write_data(int fd, struct stpdfs_sb *sb, struct stpdfs_inode *inode, uint8_t *data)
 {
-	size_t idx;
-	uint32_t zonenum;
-	size_t max_zone;
+	size_t i;
+	size_t j;
+	size_t byte_write;
+	uint32_t zones1[STPDFS_ZONES_PER_BLOCK];
+	uint32_t zones2[STPDFS_ZONES_PER_BLOCK];
 
-	for (idx = 0; idx < size; idx += STPDFS_BLOCK_SIZE)
+	byte_write = 0;
+	for (i = 0; i < 7; i++)
 	{
-		max_zone = idx / STPDFS_BLOCK_SIZE;
-		for (zonenum = 0; zonenum < max_zone; zonenum++)
+		if (inode->zones[i] == 0)
 		{
-			write_zone(fd, sb, inode, zonenum, buffer + idx, ((idx + 1) * 512) > size ? size % 512 : 512);
+			inode->zones[i] = stpdfs_alloc_block(fd, sb);
 		}
+		stpdfs_write(fd, inode->zones[i], data + byte_write, (inode->size - byte_write) >= STPDFS_BLOCK_SIZE ? STPDFS_BLOCK_SIZE : (inode->size - byte_write));
+		byte_write += STPDFS_BLOCK_SIZE;
 
+		if (byte_write >= inode->size)
+		{
+			return (byte_write);
+		}
 	}
 
-	return (0)
+	/*
+
+	byte_read += stpdfs_write_indirect(fd, inode->zones[7], *buffer + byte_read, inode->size - byte_read);
+	if (byte_read >= inode->size)
+	{
+		return (byte_read);
+	}
+
+	stpdfs_read(fd, inode->zones[8], zones1, sizeof(zones1));
+
+	for (i = 0; i < STPDFS_ZONES_PER_BLOCK; i++)
+	{
+		byte_read += stpdfs_read_indirect(fd, zones1[i], *buffer + byte_read, inode->size - byte_read);
+		if (byte_read >= inode->size)
+		{
+			return (byte_read);
+		}
+	}
+	
+
+	stpdfs_read(fd, inode->zones[9], zones1, sizeof(zones1));
+
+	for (i = 0; i < STPDFS_ZONES_PER_BLOCK; i++)
+	{
+		stpdfs_read(fd, zones1[i], zones2, sizeof(zones2));
+
+		for (j = 0; j < STPDFS_ZONES_PER_BLOCK; j++)
+		{
+			byte_read += stpdfs_read_indirect(fd, zones2[i], *buffer + byte_read, inode->size - byte_read);
+			if (byte_read >= inode->size)
+			{
+				return (byte_read);
+			}
+		}
+		
+	}*/
+
+	return (byte_write);
+}
+
+static int
+stpdfs_read_indirect(int fd, uint32_t blocknum, uint8_t *buffer, size_t size)
+{
+	size_t i;
+	uint32_t zones[STPDFS_ZONES_PER_BLOCK];
+	size_t byte_read;
+
+	stpdfs_read(fd, blocknum, zones, sizeof(zones));
+
+	byte_read = 0;
+	for (i = 0; i < STPDFS_ZONES_PER_BLOCK; i++)
+	{
+		stpdfs_read(fd, zones[i], buffer, STPDFS_BLOCK_SIZE);
+		byte_read += STPDFS_BLOCK_SIZE;
+
+		if (byte_read >= size)
+		{
+			return (byte_read);
+		}
+	}
+
+	return (byte_read);
+}
+
+int
+stpdfs_read_data(int fd, struct stpdfs_sb *sb, struct stpdfs_inode *inode, uint8_t **buffer)
+{
+	size_t i;
+	size_t j;
+	size_t byte_read;
+	uint32_t zones1[STPDFS_ZONES_PER_BLOCK];
+	uint32_t zones2[STPDFS_ZONES_PER_BLOCK];
+	
+
+	*buffer = (uint8_t *)malloc(inode->size + STPDFS_BLOCK_SIZE);
+
+	byte_read = 0;
+	for (i = 0; i < 7; i++)
+	{
+		stpdfs_read(fd, inode->zones[i], *buffer, STPDFS_BLOCK_SIZE);
+		byte_read += STPDFS_BLOCK_SIZE;
+
+		if (byte_read >= inode->size)
+		{
+			return (byte_read);
+		}
+	}
+
+	byte_read += stpdfs_read_indirect(fd, inode->zones[7], *buffer + byte_read, inode->size - byte_read);
+	if (byte_read >= inode->size)
+	{
+		return (byte_read);
+	}
+
+	stpdfs_read(fd, inode->zones[8], zones1, sizeof(zones1));
+
+	for (i = 0; i < STPDFS_ZONES_PER_BLOCK; i++)
+	{
+		byte_read += stpdfs_read_indirect(fd, zones1[i], *buffer + byte_read, inode->size - byte_read);
+		if (byte_read >= inode->size)
+		{
+			return (byte_read);
+		}
+	}
+	
+
+	stpdfs_read(fd, inode->zones[9], zones1, sizeof(zones1));
+
+	for (i = 0; i < STPDFS_ZONES_PER_BLOCK; i++)
+	{
+		stpdfs_read(fd, zones1[i], zones2, sizeof(zones2));
+
+		for (j = 0; j < STPDFS_ZONES_PER_BLOCK; j++)
+		{
+			byte_read += stpdfs_read_indirect(fd, zones2[i], *buffer + byte_read, inode->size - byte_read);
+			if (byte_read >= inode->size)
+			{
+				return (byte_read);
+			}
+		}
+		
+	}
+
+	return (byte_read);
 }
