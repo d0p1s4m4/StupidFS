@@ -130,6 +130,9 @@ struct stpdfs_inode {
 #define STPDFS_INODE_SIZE sizeof(struct inode)
 
 # define STPDFS_NDIR 7 /**< Number of direct block */
+# define STPDFS_SIND 7 /**< Indirect block */
+# define STPDFS_DIND 8 /**< Double indirect */
+# define STPDFS_TIND 9 /**< Triple indirect */
 
 # define STPDFS_INO_FLAG_ALOC   (1 << 15)
 # define STPDFS_INO_FLAG_LZP    (1 << 1)

@@ -12,9 +12,21 @@ struct stpdfs_super_info {
 };
 
 struct stpdfs_inode_info {
-	struct stpdfs_inode ino;
-	int fd;
+	int valid;
 	int refcount;
+	uint32_t inum;
+	struct stpdfs_super_info *sbi;
+
+	struct stpdfs_inode inode;
+};
+
+struct stpdfs_file {
+	int refcount;
+
+	struct stpdfs_inode_info *ip;
+	size_t offset;
+
+	struct stpdfs_file *next;
 };
 
 struct stpdfs_buffer {
@@ -40,6 +52,8 @@ void stpdfs_bpin(struct stpdfs_buffer *buff);
 int stpdfs_read_super(struct stpdfs_super_info *sbi, int fd);
 int stpdfs_super_validate(struct stpdfs_sb *sb);
 int stpdfs_super_kill(struct stpdfs_super_info *sbi);
+uint32_t stpdfs_super_balloc(struct stpdfs_super_info *sbi);
+int stpdfs_super_bfreee(struct stpdfs_super_info *sbi, uint32_t blocknum);
 
 uint32_t stpdfs_alloc_block(int fd, struct stpdfs_sb *sb);
 int stpdfs_free_block(int fd, struct stpdfs_sb *sb, uint32_t blocknum);
