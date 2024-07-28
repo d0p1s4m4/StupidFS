@@ -7,8 +7,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <time.h>
-#include <stupidfs.h>
-#include <stpdfs.h>
+#include <libstpdfs/stpdfs.h>
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif /* HAVE_CONFIG_H */

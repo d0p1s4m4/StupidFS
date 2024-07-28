@@ -97,7 +97,13 @@ stpdfs_brelse(struct stpdfs_buffer *buff)
 	struct stpdfs_buffer *tmp;
 
 	buff->refcount--;
-	if (buff->refcount <= 0)
+	if (buff->refcount > 0) return;
+
+	if (buff == head)
+	{
+		head = buff->next;
+	}
+	else
 	{
 		for (tmp = head; tmp != NULL; tmp = tmp->next)
 		{

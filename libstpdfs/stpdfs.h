@@ -49,6 +49,7 @@ void stpdfs_brelse(struct stpdfs_buffer *buff);
 void stpdfs_bpin(struct stpdfs_buffer *buff);
 
 /* super.c */
+int stpdfs_super_open(struct stpdfs_super_info *sbi, const char *fname);
 int stpdfs_read_super(struct stpdfs_super_info *sbi, int fd);
 int stpdfs_super_validate(struct stpdfs_sb *sb);
 int stpdfs_super_kill(struct stpdfs_super_info *sbi);
@@ -57,5 +58,8 @@ int stpdfs_super_bfreee(struct stpdfs_super_info *sbi, uint32_t blocknum);
 
 uint32_t stpdfs_alloc_block(int fd, struct stpdfs_sb *sb);
 int stpdfs_free_block(int fd, struct stpdfs_sb *sb, uint32_t blocknum);
+
+struct stpdfs_inode_info *stpdfs_inode_get(struct stpdfs_super_info *sbi, uint32_t inum);
+int stpdfs_inode_read(struct stpdfs_inode_info *ip, uint8_t *dest, size_t offset, size_t size);
 
 #endif /* !STPDFS_H */

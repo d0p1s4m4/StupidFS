@@ -16,6 +16,8 @@ struct stpdfs_inode_info *
 stpdfs_inode_get(struct stpdfs_super_info *sbi, uint32_t inum)
 {
 	struct stpdfs_inode_info *empty;
+	struct stpdfs_buffer *buff;
+	struct stpdfs_inode *dinode;
 	int idx;
 
 	empty = NULL;
@@ -38,7 +40,12 @@ stpdfs_inode_get(struct stpdfs_super_info *sbi, uint32_t inum)
 	empty->sbi = sbi;
 	empty->inum = inum;
 	empty->refcount = 1;
-	empty->valid = 0;
+
+	empty->valid = 1;
+	buff = stpdfs_bread(sbi->fd, IBLOCK(inum));
+	dinode = (struct stpdfs_inode *)buff->data + inum % STPDFS_INODES_PER_BLOCK;
+	memcpy(&empty->inode, dinode, sizeof(struct stpdfs_inode));
+	stpdfs_brelse(buff);
 
 	return (empty);
 }
