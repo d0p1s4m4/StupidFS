@@ -18,6 +18,8 @@ struct stpdfs_inode_info {
 	struct stpdfs_super_info *sbi;
 
 	struct stpdfs_inode inode;
+
+	struct stpdfs_inode_info *next;
 };
 
 struct stpdfs_file {
@@ -61,5 +63,5 @@ int stpdfs_free_block(int fd, struct stpdfs_sb *sb, uint32_t blocknum);
 
 struct stpdfs_inode_info *stpdfs_inode_get(struct stpdfs_super_info *sbi, uint32_t inum);
 int stpdfs_inode_read(struct stpdfs_inode_info *ip, uint8_t *dest, size_t offset, size_t size);
-
+int stpdfs_create(struct stpdfs_inode_info *dp, struct stpdfs_dirent *dirent, uint16_t mode);
 #endif /* !STPDFS_H */

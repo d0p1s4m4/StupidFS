@@ -24,10 +24,21 @@ static struct option long_options[] = {
 static char *path = "/";
 static char *image = NULL;
 
+extern char *prg_name;
+
 static void
 usage(int retval)
 {
+	if (retval == EXIT_FAILURE)
+	{
+		printf("Try '%s ls -h' for more informations.\n", prg_name);
+	}
+	else
+	{
+		printf("Usage: %s copy -i /dev/name [path]\n", prg_name);
+	}
 
+	exit(retval);
 }
 
 static int

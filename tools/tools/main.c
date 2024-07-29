@@ -23,7 +23,7 @@ struct command commands[] = {
 	{NULL, NULL}
 };
 
-static const char *prg_name;
+const char *prg_name;
 
 static void
 usage(int retval)

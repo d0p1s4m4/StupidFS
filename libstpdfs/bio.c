@@ -49,10 +49,7 @@ bget(int fd, uint32_t blocknum)
 	}
 
 	buff = (struct stpdfs_buffer *)malloc(sizeof(struct stpdfs_buffer));
-	if (buff == NULL)
-	{
-		return (NULL);
-	}
+	if (buff == NULL) return (NULL);
 
 	buff->next = head;
 	buff->blocknum = blocknum;
@@ -113,8 +110,9 @@ stpdfs_brelse(struct stpdfs_buffer *buff)
 				break;
 			}
 		}
-		free(buff);
 	}
+
+	free(buff);
 }
 
 void

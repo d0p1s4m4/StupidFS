@@ -30,7 +30,13 @@ stpdfs_file_close(struct stpdfs_file *f)
 	struct stpdfs_file *tmp;
 
 	f->refcount--;
-	if (f->refcount <= 0)
+	if (f->refcount > 0) return;
+
+	if (f == head)
+	{
+		head = f->next;
+	}
+	else
 	{
 		for (tmp = head; tmp != NULL; tmp = tmp->next)
 		{
@@ -40,6 +46,7 @@ stpdfs_file_close(struct stpdfs_file *f)
 				break;
 			}
 		}
-		free(f);
 	}
+
+	free(f);
 }

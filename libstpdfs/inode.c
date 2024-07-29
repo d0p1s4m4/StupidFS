@@ -1,5 +1,5 @@
-#include "stpdfs.h"
 #include "stupidfs.h"
+#include <stdlib.h>
 #include <libstpdfs/stpdfs.h>
 #include <stdint.h>
 #include <string.h>
@@ -10,44 +10,39 @@
 #define INODE_CACHE 50
 #define IBLOCK(x) (x / STPDFS_INODES_PER_BLOCK + 2)
 
-static struct stpdfs_inode_info icache[INODE_CACHE] = {0};
+static struct stpdfs_inode_info *head;
 
 struct stpdfs_inode_info *
 stpdfs_inode_get(struct stpdfs_super_info *sbi, uint32_t inum)
 {
-	struct stpdfs_inode_info *empty;
+	struct stpdfs_inode_info *ip;
 	struct stpdfs_buffer *buff;
 	struct stpdfs_inode *dinode;
 	int idx;
 
-	empty = NULL;
-	for (idx = 0; idx < INODE_CACHE; idx++)
+	for (ip = head; ip != NULL; ip = ip->next)
 	{
-		if (icache[idx].refcount > 0 && icache[idx].inum == inum)
+		if (ip->inum == inum)
 		{
-			icache[idx].refcount++;
-			return (&icache[idx]);
-		}
-
-		if (empty == NULL && icache[idx].refcount == 0)
-		{
-			empty = &icache[idx];
+			ip->refcount++;
+			return (ip);
 		}
 	}
+	
+	ip = (struct stpdfs_inode_info *)malloc(sizeof(struct stpdfs_inode_info));
+	if (ip == NULL) return (NULL);
 
-	if (empty == NULL) return (NULL);
+	ip->sbi = sbi;
+	ip->inum = inum;
+	ip->refcount = 1;
 
-	empty->sbi = sbi;
-	empty->inum = inum;
-	empty->refcount = 1;
-
-	empty->valid = 1;
+	ip->valid = 1;
 	buff = stpdfs_bread(sbi->fd, IBLOCK(inum));
 	dinode = (struct stpdfs_inode *)buff->data + inum % STPDFS_INODES_PER_BLOCK;
-	memcpy(&empty->inode, dinode, sizeof(struct stpdfs_inode));
+	memcpy(&ip->inode, dinode, sizeof(struct stpdfs_inode));
 	stpdfs_brelse(buff);
 
-	return (empty);
+	return (ip);
 }
 
 struct stpdfs_inode_info *
@@ -63,6 +58,7 @@ stpdfs_inode_alloc(struct stpdfs_super_info *sbi)
 		dinode = (struct stpdfs_inode *)buff->data + inum % STPDFS_INODES_PER_BLOCK;
 		if ((dinode->flags & STPDFS_INO_FLAG_ALOC) == 0)
 		{
+			memset(dinode, 0, sizeof(struct stpdfs_inode));
 			dinode->flags = STPDFS_INO_FLAG_ALOC;
 			stpdfs_bwrite(buff);
 			stpdfs_brelse(buff);
@@ -89,8 +85,8 @@ stpdfs_inode_update(struct stpdfs_inode_info *ip)
 	stpdfs_brelse(buff);
 }
 
-int
-stpdfs_inode_bmap(struct stpdfs_inode_info *ip, uint32_t blocknum)
+static int
+bmap(struct stpdfs_inode_info *ip, uint32_t blocknum)
 {
 	uint32_t *addrs;
 	uint32_t index;
@@ -127,12 +123,6 @@ stpdfs_inode_bmap(struct stpdfs_inode_info *ip, uint32_t blocknum)
 	return (0);
 }
 
-void
-stpdfs_inode_trunc(struct stpdfs_inode_info *ip)
-{
-	(void)ip;
-}
-
 int
 stpdfs_inode_read(struct stpdfs_inode_info *ip, uint8_t *dest, size_t offset, size_t size)
 {
@@ -149,7 +139,7 @@ stpdfs_inode_read(struct stpdfs_inode_info *ip, uint8_t *dest, size_t offset, si
 	total = 0;
 	while (total < size)
 	{
-		zone = stpdfs_inode_bmap(ip, offset/STPDFS_BLOCK_SIZE);
+		zone = bmap(ip, offset/STPDFS_BLOCK_SIZE);
 		if (zone == 0) return (total);
 
 		buff = stpdfs_bread(ip->sbi->fd, zone);
@@ -182,7 +172,7 @@ stpdfs_inode_write(struct stpdfs_inode_info *ip, const uint8_t *src, size_t offs
 	total = 0;
 	while (total < size)
 	{
-		zone = stpdfs_inode_bmap(ip, offset/STPDFS_BLOCK_SIZE);
+		zone = bmap(ip, offset/STPDFS_BLOCK_SIZE);
 		if (zone == 0) break;
 
 		buff = stpdfs_bread(ip->sbi->fd, zone);
@@ -227,7 +217,7 @@ stpdfs_dirlookup(struct stpdfs_inode_info *dp, const char *name, size_t *offset)
 
 		if (strncmp(name, dirent.filename, STPDFS_NAME_MAX))
 		{
-			*offset = idx;
+			if (offset) *offset = idx;
 			return (stpdfs_inode_get(dp->sbi, dirent.inode));
 		}
 	}
@@ -238,6 +228,24 @@ stpdfs_dirlookup(struct stpdfs_inode_info *dp, const char *name, size_t *offset)
 int
 stpdfs_dirlink(struct stpdfs_inode_info *dp, const char *name, uint32_t inum)
 {
+	struct stpdfs_inode_info *ip;
+
+	ip = stpdfs_dirlookup(dp, name, 0);
 	return (0);
 }
 
+int
+stpdfs_create(struct stpdfs_inode_info *dp, struct stpdfs_dirent *dirent, uint16_t mode)
+{
+	struct stpdfs_inode_info *ip;
+	struct stpdfs_buffer *buff;
+	uint32_t blocknum;
+
+	ip = stpdfs_inode_alloc(dp->sbi);
+	ip->inode.mode = mode;
+	dirent->inode = ip->inum;
+	stpdfs_inode_write(dp, (uint8_t *)dirent, dp->inode.size, STPDFS_DIRENT_SIZE);
+	stpdfs_inode_update(ip);
+	stpdfs_inode_update(dp);
+	return (0);
+}
