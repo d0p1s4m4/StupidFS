@@ -47,12 +47,12 @@ AC_CHECK_FUNCS(m4_normalize([
 ]))
 
 AC_CONFIG_FILES([Makefile
-				lib/Makefile
 				libcrypto/Makefile
 				libcrypto/tests/Makefile
 				liblzp/Makefile
 				liblzp/tests/Makefile
 				libstpdfs/Makefile
+				libfs/Makefile
 				tools/Makefile
 				linux/Makefile
 				fuse/Makefile])

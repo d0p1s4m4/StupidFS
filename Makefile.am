@@ -1,4 +1,4 @@
-SUBDIRS = libstpdfs libcrypto liblzp tools
+SUBDIRS = libstpdfs libcrypto liblzp libfs tools
 
 if BUILD_FUSE
 SUBDIRS  += fuse
