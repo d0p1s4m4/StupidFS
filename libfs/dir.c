@@ -32,3 +32,40 @@ fs_dir_lookup(struct fs_inode *dp, const char *name, size_t *offset)
 
 	return (NULL);
 }
+
+int
+fs_dir_link(struct fs_inode *dp, const char *name, uint32_t inum)
+{
+	int offset;
+	struct fs_inode *ip;
+	struct stpdfs_dirent dirent;
+
+	ip = fs_dir_lookup(dp, name, 0);
+	if (ip != NULL)
+	{
+		fs_inode_release(ip);
+		return (-EEXIST);
+	}
+
+	for (offset = 0; offset < dp->inode.size; offset += STPDFS_DIRENT_SIZE)
+	{
+		fs_read(dp, (uint8_t *)&dirent, offset, STPDFS_DIRENT_SIZE);
+		if (dirent.inode == 0)
+		{
+			break;
+		}
+	}
+
+	memset(dirent.filename, 0, STPDFS_NAME_MAX);
+	strncpy(dirent.filename, name, STPDFS_NAME_MAX);
+
+	dirent.inode = inum;
+
+	if (fs_write(dp, (uint8_t *)&dirent, offset, STPDFS_DIRENT_SIZE) != STPDFS_DIRENT_SIZE)
+	{
+		return (-1);
+	}
+	fs_inode_update(dp);
+
+	return (0);
+}

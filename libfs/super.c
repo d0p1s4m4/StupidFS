@@ -63,6 +63,8 @@ fs_super_kill(struct fs_super *super)
 	struct fs_buffer *buff;
 	int ret;
 
+	super->sb.state = STPDFS_CLEANLY_UNMOUNTED;
+
 	ret = 0;
 	buff = fs_bio_bread(super->fd, STPDFS_SB_BLOCK);
 	if (buff == NULL) 

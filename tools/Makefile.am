@@ -1,10 +1,10 @@
 AM_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib -I$(top_srcdir)
-LDADD = ../libstpdfs/libstpdfs.a
+LDADD = ../libstpdfs/libstpdfs.a ../libfs/libfs.a
 
 bin_PROGRAMS = mkfs.stpd tools.stpd
 
 mkfs_stpd_SOURCES = mkfs/main.c
-mkfs_stpd_LDADD = ../libstpdfs/libstpdfs.a mkfs/bootsector.o
+mkfs_stpd_LDADD = ../libfs/libfs.a mkfs/bootsector.o
 
 tools_stpd_SOURCES = tools/main.c tools/ls.c tools/copy.c
 

@@ -9,4 +9,7 @@ struct fs_super {
 	struct stpdfs_sb sb;
 };
 
+
+int fs_super_kill(struct fs_super *super);
+
 #endif /* !FS_SUPER_H */

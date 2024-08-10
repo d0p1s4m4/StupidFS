@@ -1,3 +1,7 @@
+#include "libfs/bio/bio.h"
+#include "libfs/inode.h"
+#include "libfs/super.h"
+#include "stupidfs.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,7 +11,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <time.h>
-#include <libstpdfs/stpdfs.h>
+#include <libfs/fs.h>
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif /* HAVE_CONFIG_H */
@@ -23,7 +27,6 @@ static int inodes = -1;
 static const char *device;
 static int blocks = -1;
 static int bootable = 0;
-static struct stpdfs_sb super;
 
 extern const char _binary_mkfs_boot_o_start[];
 extern const char _binary_mkfs_boot_o_end[];
@@ -66,103 +69,26 @@ version(void)
 	exit(EXIT_SUCCESS);
 }
 
-uint32_t
-alloc_block(int fd, struct stpdfs_sb *sb)
+static int
+create_create_super(struct fs_super *super)
 {
-	uint32_t blocknum;
-	struct stpdfs_free freelist;
+	struct stat st;
+	int dev_block;
 
-	sb->state = STPDFS_DIRTY; /* mark state dirty */
-redo:
-	sb->freelist.nfree--;
-	blocknum = sb->freelist.free[sb->freelist.nfree];
-	if (sb->freelist.nfree == 0 && blocknum != 0)
+	if (stat(device, &st) < 0)
 	{
-		stpdfs_read(fd, blocknum, &freelist, sizeof(struct stpdfs_free));
-		memcpy(sb->freelist.free, &freelist, sizeof(uint32_t) * 100);
-		sb->freelist.nfree = freelist.nfree;
-		goto redo;
-	}
-
-	sb->time = time(NULL);
-
-	return (blocknum);
-}
-
-int
-free_block(int fd, struct stpdfs_sb *sb, uint32_t blocknum)
-{
-	struct stpdfs_free copy;
-
-	if (blocknum == 0 || blocknum >= sb->fsize)
-	{
+		perror(device);
 		return (-1);
 	}
 
-	sb->state = STPDFS_DIRTY; /* mark state dirty */
-
-	if (sb->freelist.nfree == 100)
-	{
-		memcpy(&copy, sb->freelist.free, sizeof(uint32_t) * 100);
-		copy.nfree = sb->freelist.nfree;
-
-		stpdfs_write(fd, blocknum, &copy, sizeof(struct stpdfs_free));
-
-		sb->freelist.nfree = 1;
-		sb->freelist.free[0] = blocknum;
-	}
-	else
-	{
-		sb->freelist.free[sb->freelist.nfree++] = blocknum;
-	}
-
-	sb->time = time(NULL);
-	return (0);
-}
-
-static int
-write_block(int fd, void *data, size_t size)
-{
-	uint8_t buffer[STPDFS_BLOCK_SIZE];
-
-	memset(buffer, 0, STPDFS_BLOCK_SIZE);
-	if (data)
-	{
-		memcpy(buffer, data, size);
-	}
-
-	return (write(fd, buffer, STPDFS_BLOCK_SIZE) == STPDFS_BLOCK_SIZE); 
-}
-
-
-static int
-mkfs()
-{
-	struct stat statbuf;
-	struct stpdfs_dirent rootdirent[2];
-	int fd;
-	int dev_block;
-	int idx;
-	struct stpdfs_inode inds[STPDFS_INODES_PER_BLOCK];
-	struct stpdfs_free freebuff;
-	int freeblock;
-	int nextfree;
-
-	if (stat(device, &statbuf) < 0)
+	super->fd = open(device, O_RDWR);
+	if (super->fd < 0)
 	{
 		perror(device);
-		return (EXIT_FAILURE);
+		return (-1);
 	}
 
-	fd = open(device, O_RDWR);
-	if (fd < 0)
-	{
-		perror(device);
-		return (EXIT_FAILURE);
-	}
-
-	dev_block = statbuf.st_size / STPDFS_BLOCK_SIZE;
-	printf("device blocks: %d\n", dev_block);
+	dev_block = st.st_size / STPDFS_BLOCK_SIZE;
 	if (blocks < 0)
 	{
 		blocks = dev_block;
@@ -180,62 +106,80 @@ mkfs()
 		}
 	}
 
-	super.magic = STPDFS_SB_MAGIC;
-	super.revision = STPDFS_SB_REV;
-	super.isize = inodes / STPDFS_INODES_PER_BLOCK;
-	super.fsize = blocks;
-	super.freelist.nfree = 0;
+	super->sb.magic = STPDFS_SB_MAGIC;
+	super->sb.revision = STPDFS_SB_REV;
+	super->sb.isize = inodes / STPDFS_INODES_PER_BLOCK;
+	super->sb.fsize = blocks;
+	super->sb.freelist.nfree = 0;
+
+	return (0);
+}
+
+static int
+mkfs()
+{
+	uint32_t idx;
+	struct fs_super super;
+	struct stpdfs_inode dinodes[STPDFS_INODES_PER_BLOCK];
+	struct fs_inode *rootip;
+
+	if (create_create_super(&super) != 0)
+	{
+		return (EXIT_FAILURE);
+	}
 
 	/* write inodes */
-	lseek(fd, 2 * STPDFS_BLOCK_SIZE, SEEK_SET);
-	memset(&inds, 0, sizeof(struct stpdfs_inode) * STPDFS_INODES_PER_BLOCK);
-	for (idx = 0; idx < super.isize; idx++)
+	memset(dinodes, 0, sizeof(struct stpdfs_inode) * STPDFS_INODES_PER_BLOCK);
+	for (idx = 2; idx < (super.sb.isize + 2); idx++)
 	{
-		if (write_block(fd, &inds, sizeof(struct stpdfs_inode) * STPDFS_INODES_PER_BLOCK));
+		if (fs_bio_raw_write(super.fd, idx, dinodes, sizeof(struct stpdfs_inode) * STPDFS_INODES_PER_BLOCK));
 	}
 
 	/* set free blocks */
-	freeblock = blocks - (inodes + 2);
-	for (nextfree = super.isize + 3; nextfree < freeblock; nextfree++)
+	for (idx = super.sb.isize + 3; idx < blocks; idx++)
 	{
-		if (free_block(fd, &super, nextfree) != 0)
+		if (fs_bfree(&super, idx) != 0)
 		{
-			fprintf(stderr, "error: %u\n", nextfree);
+			fprintf(stderr, "error: %u\n", idx);
 		}
 	}
 
-	/* create root dir */
-	stpdfs_read(fd, 2, &inds, sizeof(struct stpdfs_inode) * STPDFS_INODES_PER_BLOCK);
-	inds[STPDFS_ROOTINO].modtime = time(NULL);
-	inds[STPDFS_ROOTINO].actime = time(NULL);
-	inds[STPDFS_ROOTINO].size = sizeof(struct stpdfs_dirent) * 2;
-	inds[STPDFS_ROOTINO].flags = STPDFS_INO_FLAG_ALOC;
-	inds[STPDFS_ROOTINO].mode = STPDFS_S_IFDIR | STPDFS_S_IRUSR | STPDFS_S_IWUSR | STPDFS_S_IXUSR | STPDFS_S_IRGRP | STPDFS_S_IXGRP | STPDFS_S_IXOTH;
-	inds[STPDFS_ROOTINO].zones[0] = alloc_block(fd, &super);
-	inds[STPDFS_ROOTINO].size = sizeof(struct stpdfs_dirent) * 2;
-	stpdfs_read(fd, inds[STPDFS_ROOTINO].zones[0], rootdirent, sizeof(struct stpdfs_dirent) * 2);
-	strcpy(rootdirent[0].filename, ".");
-	rootdirent[1].inode = 1;
-	strcpy(rootdirent[1].filename, "..");
-	rootdirent[1].inode = 1;
-	inds[STPDFS_ROOTINO].nlink += 2;
-	stpdfs_write(fd, inds[STPDFS_ROOTINO].zones[0], rootdirent, sizeof(struct stpdfs_dirent) * 2);
-	stpdfs_write(fd, 2, &inds, sizeof(struct stpdfs_inode) * STPDFS_INODES_PER_BLOCK);
+	rootip = fs_inode_get(&super, STPDFS_ROOTINO);
+	if (rootip == NULL)
+	{
+		return (EXIT_FAILURE);
+	}
+	
+	rootip->valid = 1;
 
-	/* write super block */
-	super.time = time(NULL);
-	super.state = STPDFS_CLEANLY_UNMOUNTED;
-	stpdfs_write(fd, 1, &super, sizeof(struct stpdfs_sb));
+	rootip->inode.modtime = time(NULL);
+	rootip->inode.actime = time(NULL);
+	rootip->inode.size = 0;
+	rootip->inode.flags = STPDFS_INO_FLAG_ALOC;
+	rootip->inode.mode = STPDFS_S_IFDIR | STPDFS_S_IRUSR | STPDFS_S_IWUSR | STPDFS_S_IXUSR | STPDFS_S_IRGRP | STPDFS_S_IXGRP | STPDFS_S_IXOTH;
+
+	fs_inode_update(rootip);
+
+	if (fs_dir_link(rootip, ".", rootip->inum) != 0)
+	{
+		printf("WTF?");
+	}
+	fs_dir_link(rootip, "..", rootip->inum);
+
+	rootip->inode.nlink = 2;
+
+	fs_inode_update(rootip);
+	fs_inode_release(rootip);
 
 	if (bootable)
 	{
-		stpdfs_write(fd, 0, (void *)_binary_mkfs_boot_o_start, STPDFS_BLOCK_SIZE);
+		fs_bio_raw_write(super.fd, 0, (void *)_binary_mkfs_boot_o_start, STPDFS_BLOCK_SIZE);
 	}
 
-	/* we finished \o/  */
-	printf("StupidFS: %u blocks (%u Inodes)\n", super.fsize, super.isize);
+	fs_super_kill(&super);
 
-	close(fd);
+	/* we finished \o/  */
+	printf("StupidFS: %u blocks (%u Inodes)\n", super.sb.fsize, super.sb.isize);
 
 	return (EXIT_SUCCESS);
 }
