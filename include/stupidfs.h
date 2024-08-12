@@ -62,7 +62,7 @@
 struct stpdfs_free {
 	uint32_t free[100]; /**< List of free block (0-99), index 0 point to next freelist */
 	uint8_t nfree; /**< index  */
-} __attribute__((packed));
+};
 
 enum stpdfs_state {
 	STPDFS_CLEANLY_UNMOUNTED = 0,

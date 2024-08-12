@@ -59,7 +59,7 @@ fs_bio_bread(int fd, uint32_t blocknum)
 void
 fs_bio_bwrite(struct fs_buffer *buff)
 {
-	fs_bio_raw_read(buff->fd, buff->blocknum, buff->data, STPDFS_BLOCK_SIZE);
+	fs_bio_raw_write(buff->fd, buff->blocknum, buff->data, STPDFS_BLOCK_SIZE);
 }
 
 void
@@ -87,16 +87,4 @@ fs_bio_brelse(struct fs_buffer *buff)
 	}
 
 	free(buff);
-}
-
-void
-stpdfs_bpin(struct fs_buffer *buff)
-{
-	buff->refcount++;
-}
-
-void
-stpdfs_bunpin(struct fs_buffer *buff)
-{
-	buff->refcount--;
 }

@@ -1,12 +1,14 @@
 AM_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib -I$(top_srcdir)
 LDADD = ../libstpdfs/libstpdfs.a ../libfs/libfs.a
 
-bin_PROGRAMS = mkfs.stpd tools.stpd
+bin_PROGRAMS = mkfs.stpd tools.stpd inspect.stpd
 
 mkfs_stpd_SOURCES = mkfs/main.c
 mkfs_stpd_LDADD = ../libfs/libfs.a mkfs/bootsector.o
 
 tools_stpd_SOURCES = tools/main.c tools/ls.c tools/copy.c
+
+inspect_stpd_SOURCES = inspect/main.c
 
 mkfs/boot.o: mkfs/boot.asm
 	$(NASM) -fbin -o $@ $<

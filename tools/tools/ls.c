@@ -1,4 +1,7 @@
 
+#include "libfs/fs.h"
+#include "libfs/inode.h"
+#include "libfs/super.h"
 #include "stupidfs.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,25 +47,30 @@ usage(int retval)
 static int
 do_ls(void)
 {
-	struct stpdfs_super_info sbi;
-	struct stpdfs_inode_info *ip;
+	struct fs_super super;
+	struct fs_inode *ip;
 	struct stpdfs_dirent dirent;
 	size_t idx;
 
-	if (stpdfs_super_open(&sbi, image))
+	if (fs_super_open(&super, image))
 	{
 		return (EXIT_FAILURE);
 	}
 
-	ip = stpdfs_inode_get(&sbi, STPDFS_ROOTINO);
+	ip = fs_inode_get(&super, STPDFS_ROOTINO);
+	if (ip->valid == 0)
+	{
+		fs_inode_read(ip);
+	}
+
 	for (idx = 0; idx < ip->inode.size; idx += STPDFS_DIRENT_SIZE)
 	{
-		stpdfs_inode_read(ip, (uint8_t *)&dirent, idx, STPDFS_DIRENT_SIZE);
+		fs_read(ip, (uint8_t *)&dirent, idx, STPDFS_DIRENT_SIZE);
 		printf("%s\n", dirent.filename);
 	}
 
 
-	stpdfs_super_kill(&sbi);
+	fs_super_kill(&super);
 	return (EXIT_SUCCESS);
 }
 

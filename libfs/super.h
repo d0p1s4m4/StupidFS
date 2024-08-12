@@ -11,5 +11,6 @@ struct fs_super {
 
 
 int fs_super_kill(struct fs_super *super);
+int fs_super_open(struct fs_super *super, const char *fname);
 
 #endif /* !FS_SUPER_H */

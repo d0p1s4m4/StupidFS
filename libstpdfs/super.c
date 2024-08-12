@@ -39,7 +39,7 @@ stpdfs_super_open(struct stpdfs_super_info *sbi, const char *fname)
 {
 	struct stpdfs_buffer *buff;
 
-	sbi->fd = open(fname, O_RDWR);
+	sbi->fd = open(fname, O_RDWR | O_BINARY);
 	if (sbi->fd < 0)
 	{
 		perror(fname);

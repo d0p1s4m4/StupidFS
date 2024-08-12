@@ -42,7 +42,6 @@ redo:
 int
 fs_bfree(struct fs_super *super, uint32_t blocknum)
 {
-	struct stpdfs_free copy;
 	struct fs_buffer *buff;
 
 	if (blocknum == 0 || blocknum >= super->sb.fsize)

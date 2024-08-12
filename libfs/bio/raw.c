@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <stupidfs.h>
+#include <stdio.h>
 
 size_t
 fs_bio_raw_write(int fd, uint32_t blocknum, void *data, size_t size)

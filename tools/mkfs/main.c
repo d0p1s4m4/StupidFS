@@ -81,7 +81,7 @@ create_create_super(struct fs_super *super)
 		return (-1);
 	}
 
-	super->fd = open(device, O_RDWR);
+	super->fd = open(device, O_RDWR | O_BINARY);
 	if (super->fd < 0)
 	{
 		perror(device);
@@ -132,7 +132,10 @@ mkfs()
 	memset(dinodes, 0, sizeof(struct stpdfs_inode) * STPDFS_INODES_PER_BLOCK);
 	for (idx = 2; idx < (super.sb.isize + 2); idx++)
 	{
-		if (fs_bio_raw_write(super.fd, idx, dinodes, sizeof(struct stpdfs_inode) * STPDFS_INODES_PER_BLOCK));
+		if (fs_bio_raw_write(super.fd, idx, dinodes, sizeof(struct stpdfs_inode) * STPDFS_INODES_PER_BLOCK) != sizeof(struct stpdfs_inode) * STPDFS_INODES_PER_BLOCK)
+		{
+			fprintf(stderr, "wtf?:");
+		}
 	}
 
 	/* set free blocks */
@@ -154,6 +157,7 @@ mkfs()
 
 	rootip->inode.modtime = time(NULL);
 	rootip->inode.actime = time(NULL);
+	memset(rootip->inode.zones, 0, sizeof(uint32_t) * 10);
 	rootip->inode.size = 0;
 	rootip->inode.flags = STPDFS_INO_FLAG_ALOC;
 	rootip->inode.mode = STPDFS_S_IFDIR | STPDFS_S_IRUSR | STPDFS_S_IWUSR | STPDFS_S_IXUSR | STPDFS_S_IRGRP | STPDFS_S_IXGRP | STPDFS_S_IXOTH;
