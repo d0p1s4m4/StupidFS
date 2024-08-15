@@ -1,5 +1,8 @@
+#include "libfs/bio/bio.h"
 #include "libfs/inode.h"
 #include "libfs/super.h"
+#include "stupidfs.h"
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -37,8 +40,11 @@ inspect(void)
 {
 	struct fs_super sb;
 	struct fs_inode *ip;
+	struct fs_buffer *buff;
 	time_t time;
 	int idx;
+	int j;
+	char c;
 
 	if (fs_super_open(&sb, device) != 0)
 	{
@@ -74,11 +80,46 @@ inspect(void)
 		printf("Inode %d:\n", inode);
 		printf(" mode: %ho\n", ip->inode.mode);
 		printf(" nlink: %hu\n", ip->inode.nlink);
+		printf(" uid: %hx\n", ip->inode.uid);
+		printf(" gid: %hx\n", ip->inode.gid);
+		printf(" flags: %hx\n", ip->inode.flags);
 		printf(" size: %u\n", ip->inode.size);
 		time = ip->inode.actime;
 		printf(" actime: %s", ctime(&time));
 		time = ip->inode.modtime;
 		printf(" modtime: %s", ctime(&time));
+	}
+
+	if (block >= 0)
+	{
+		buff = fs_bio_bread(sb.fd, block);
+		if (buff != NULL)
+		{
+			idx = 0;
+			while (idx < STPDFS_BLOCK_SIZE)
+			{
+				printf("\033[32m%04x\033[0m\t", idx);
+				for (j = 0; j < 8; j++)
+				{
+					printf("%02x ", buff->data[idx+j]);
+				}
+				printf(" | ");
+				for (j = 0; j < 8; j++)
+				{
+					c = buff->data[idx++];
+					if (isgraph(c))
+					{
+						printf("\033[31m%c\033[0m", c);
+					}
+					else
+					{
+						printf(".");
+					}
+				}
+				printf("\n");
+			}
+			fs_bio_brelse(buff);
+		}
 	}
 
 

@@ -1,7 +1,11 @@
+#include "libfs/dir.h"
+#include "libfs/inode.h"
+#include "libfs/super.h"
 #include "stupidfs.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <time.h>
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif /* HAVE_CONFIG_H */
@@ -43,23 +47,39 @@ usage(int retval)
 int
 do_copy(void)
 {
-	struct stpdfs_super_info sbi;
-	struct stpdfs_inode_info *ip;
-	struct stpdfs_dirent dirent;
+	struct fs_super super;
+	struct fs_inode *ip;
+	struct fs_inode *dp;
 	struct stat st;
 	
 	stat(src, &st);
-	strcpy(dirent.filename, dest);
-	if (stpdfs_super_open(&sbi, image))
+
+	if (fs_super_open(&super, image))
 	{
 		return (EXIT_FAILURE);
 	}
 
-	ip = stpdfs_inode_get(&sbi, STPDFS_ROOTINO);
+	dp = fs_inode_get(&super, STPDFS_ROOTINO);
+	if (dp->valid == 0)
+	{
+		fs_inode_read(ip);
+	}
 
-	stpdfs_create(ip, &dirent, st.st_mode);
+	ip = fs_inode_alloc(&super);
+	ip->inode.mode = st.st_mode;
+	ip->inode.uid = st.st_uid;
+	ip->inode.gid = st.st_gid;
+	ip->inode.modtime = st.st_mtime;
+	ip->inode.actime = st.st_atime;
 
-	stpdfs_super_kill(&sbi);
+	fs_inode_update(ip);
+
+	fs_dir_link(dp, dest, ip->inum);
+
+	fs_inode_release(dp);
+	fs_inode_release(ip);
+
+	fs_super_kill(&super);
 
 	return (EXIT_SUCCESS);
 }

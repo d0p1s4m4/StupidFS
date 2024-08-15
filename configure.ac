@@ -51,7 +51,6 @@ AC_CONFIG_FILES([Makefile
 				libcrypto/tests/Makefile
 				liblzp/Makefile
 				liblzp/tests/Makefile
-				libstpdfs/Makefile
 				libfs/Makefile
 				tools/Makefile
 				linux/Makefile

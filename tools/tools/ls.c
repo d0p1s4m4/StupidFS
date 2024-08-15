@@ -38,7 +38,7 @@ usage(int retval)
 	}
 	else
 	{
-		printf("Usage: %s copy -i /dev/name [path]\n", prg_name);
+		printf("Usage: %s ls -i /dev/name [path]\n", prg_name);
 	}
 
 	exit(retval);
