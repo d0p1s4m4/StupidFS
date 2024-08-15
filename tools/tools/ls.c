@@ -14,7 +14,6 @@
 #ifdef HAVE_GETOPT_H
 # include <getopt.h>
 #endif /* HAVE_GETOPT_H */
-#include <libstpdfs/stpdfs.h>
 
 #ifdef HAVE_STRUCT_OPTION
 static struct option long_options[] = {

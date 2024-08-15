@@ -1,4 +1,5 @@
 #include "libfs/dir.h"
+#include "libfs/fs.h"
 #include "libfs/inode.h"
 #include "libfs/super.h"
 #include "stupidfs.h"
@@ -15,7 +16,6 @@
 #ifdef HAVE_GETOPT_H
 # include <getopt.h>
 #endif /* HAVE_GETOPT_H */
-#include <libstpdfs/stpdfs.h>
 
 #ifdef HAVE_STRUCT_OPTION
 static struct option long_options[] = {
@@ -51,6 +51,10 @@ do_copy(void)
 	struct fs_inode *ip;
 	struct fs_inode *dp;
 	struct stat st;
+	FILE *fp;
+	uint8_t buffer[512];
+	size_t nread;
+	size_t total;
 	
 	stat(src, &st);
 
@@ -62,7 +66,7 @@ do_copy(void)
 	dp = fs_inode_get(&super, STPDFS_ROOTINO);
 	if (dp->valid == 0)
 	{
-		fs_inode_read(ip);
+		fs_inode_read(dp);
 	}
 
 	ip = fs_inode_alloc(&super);
@@ -74,7 +78,21 @@ do_copy(void)
 
 	fs_inode_update(ip);
 
-	fs_dir_link(dp, dest, ip->inum);
+	fp = fopen(src, "rb");
+
+	total = 0;
+	while ((nread = fread(buffer, 1, 512, fp)) > 0)
+	{
+		fs_write(ip, buffer, total, nread);
+		total += nread;
+	}
+
+	fclose(fp);
+
+	if (fs_dir_link(dp, dest, ip->inum))
+	{
+		printf("WTF?!");
+	}
 
 	fs_inode_release(dp);
 	fs_inode_release(ip);
