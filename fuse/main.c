@@ -1,4 +1,3 @@
-#include "stpdfs.h"
 #include <fcntl.h>
 #include <stdlib.h>
 #include <stddef.h>
@@ -6,6 +5,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <libfs/fs.h>
 
 #define FUSE_USE_VERSION 31
 #include <fuse.h>
@@ -38,6 +38,8 @@ static struct options {
 	int show_version;
 } options;
 
+static struct fs_super super;
+
 #define OPTION(t, p) { t, offsetof(struct options, p), 1 }
 
 static const struct fuse_opt option_spec[] = {
@@ -54,62 +56,43 @@ static void *
 fuse_stpdfs_init(struct fuse_conn_info *conn,
 			struct fuse_config *config)
 {
-	struct stpdfs_sb sb;
-
-	(void)conn;
-	(void)config;
-
-	fd = open(options.filename, O_RDWR);
-	if (fd < 0)
-	{
-		perror(options.filename);
-		exit(EXIT_FAILURE);
-	}
-
-	stpdfs_read(fd, 1, &sb, sizeof(struct stpdfs_sb));
-
+  if (fs_super_open(&super, options.filename) != 0)
+    {
+      exit(EXIT_FAILURE);
+    }
 	return (NULL);
 }
 
 static void
 fuse_stpdfs_destroy(void *data)
 {
-	struct stpdfs_sb sb;
-
-	stpdfs_read(fd, 1, &sb, sizeof(struct stpdfs_sb)),
-	sb.state = STPDFS_CLEANLY_UNMOUNTED;
-	sb.time = time(NULL);
-
-	stpdfs_write(fd, 1, &sb, sizeof(struct stpdfs_sb));
-
-	close(fd);
+  fs_super_kill(&super);
 }
 
 static int
 fuse_stpdfs_getattr(const char *path, struct stat *stbuf,
 				struct fuse_file_info *fi)
 {
-	struct stpdfs_inode inodes[STPDFS_INODES_PER_BLOCK];
-	struct stpdfs_inode inode;
-	size_t idx;
-	uint32_t ino;
+  struct fs_inode *ip;
 
-	char *p = strtok(path, "/");
-	stpdfs_read(fd, 2, &inodes, sizeof(struct stpdfs_inode) * STPDFS_INODES_PER_BLOCK);
-	inode = inodes[1];
+  ip = fs_inode_get(&super, STPDFS_ROOTINO);
+  if (ip == NULL)
+    {
+      return (-1);
+    }
 
-	if (p != NULL)
-	{
-		// todo
-	}
+  if (ip->valid == 0)
+    {
+      fs_inode_read(ip);
+    }
 
-	stbuf->st_atim.tv_sec = inode.actime;
-	stbuf->st_mtim.tv_sec = inode.modtime;
-	stbuf->st_size = inode.size;
-	stbuf->st_mode = inode.mode;
-	stbuf->st_gid = inode.gid;
-	stbuf->st_uid = inode.uid;
-	stbuf->st_nlink = inode.nlink;
+	stbuf->st_atim.tv_sec = ip->inode.actime;
+	stbuf->st_mtim.tv_sec = ip->inode.modtime;
+	stbuf->st_size = ip->inode.size;
+	stbuf->st_mode = ip->inode.mode;
+	stbuf->st_gid = ip->inode.gid;
+	stbuf->st_uid = ip->inode.uid;
+	stbuf->st_nlink = ip->inode.nlink;
 	return (0);
 }
 

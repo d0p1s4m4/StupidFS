@@ -80,8 +80,11 @@ create_create_super(struct fs_super *super)
 		perror(device);
 		return (-1);
 	}
-
+#ifdef _WIN32
 	super->fd = open(device, O_RDWR | O_BINARY);
+#else
+	super->fd = open(device, O_RDWR);
+#endif 
 	if (super->fd < 0)
 	{
 		perror(device);

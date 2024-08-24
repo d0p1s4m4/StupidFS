@@ -40,8 +40,11 @@ int
 fs_super_open(struct fs_super *super, const char *fname)
 {
 	struct fs_buffer *buff;
-
+#ifdef _WIN32
 	super->fd = open(fname, O_RDWR | O_BINARY);
+#else
+	super->fd = open(fname, O_RDWR);
+#endif
 	if (super->fd < 0)
 	{
 		perror(fname);

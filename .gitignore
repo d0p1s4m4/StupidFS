@@ -46,3 +46,4 @@ config.sub
 hdd
 config.h
 *.guess
+inspect.stpd
