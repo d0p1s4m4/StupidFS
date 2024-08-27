@@ -5,12 +5,13 @@
 # include "inode.h"
 
 struct fs_dir {
-	char name[STPDFS_NAME_MAX];
-	uint32_t inum;
-
-	
+  struct fs_inode *dp;
+  int offset;
 };
 
+struct fs_inode *fs_dir_lookup(struct fs_inode *dp, const char *name, size_t *offset);
 int fs_dir_link(struct fs_inode *dp, const char *name, uint32_t inum);
+int fs_dir_unlink(struct fs_inode *dp, const char *name);
+int fs_mkdir(struct fs_inode *dp, const char *name);
 
 #endif /* !FS_DIR_H */

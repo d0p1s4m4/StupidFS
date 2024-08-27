@@ -1,8 +1,3 @@
-#include "libfs/dir.h"
-#include "libfs/fs.h"
-#include "libfs/inode.h"
-#include "libfs/super.h"
-#include "stupidfs.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -16,6 +11,8 @@
 #ifdef HAVE_GETOPT_H
 # include <getopt.h>
 #endif /* HAVE_GETOPT_H */
+# include <stupidfs.h>
+# include "libfs/fs.h"
 
 #ifdef HAVE_STRUCT_OPTION
 static struct option long_options[] = {
@@ -75,6 +72,7 @@ do_copy(void)
 	ip->inode.gid = st.st_gid;
 	ip->inode.modtime = st.st_mtime;
 	ip->inode.actime = st.st_atime;
+	ip->inode.flags = STPDFS_INO_FLAG_ALOC;
 
 	fs_inode_update(ip);
 
@@ -151,7 +149,11 @@ copy(int argc, char **argv)
 
 	if (dest == NULL)
 	{
-		dest = src;
+#ifdef HAVE_LIBGEN_H
+	  dest = basename(src);
+#else
+	  dest = src;
+#endif
 	} 
 
 	return (do_copy());

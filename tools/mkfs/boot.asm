@@ -11,11 +11,11 @@
 	LF equ 0xA
 
 	struc inode
-		.mode:    resb 1
-		.nlink:   resb 1
-		.uid:     resb 1
-		.gid:     resb 1
-		.flags:   resb 1
+		.mode:    resw 1
+		.nlink:   resw 1
+		.uid:     resw 1
+		.gid:     resw 1
+		.flags:   resw 1
 		.size:    resd 1
 		.zones:   resd 10
 		.actime:  resq 1
@@ -75,7 +75,7 @@ start:
 	jc .reset_disk
 
 	; read superblock
-	mov ax, DISK_BUFFER/10
+	mov ax, DISK_BUFFER
 	mov es, ax
 
 	; load two sector in memory 
@@ -84,7 +84,7 @@ start:
 	mov cx, 2
 	xor bx, bx
 	call disk_read_sectors
-
+	
 	mov dword eax, [DISK_BUFFER]
 	cmp eax, STPDFS_MAGIC
 	jne .err_magic
@@ -92,29 +92,46 @@ start:
 	; inode 0 bad
 	; inode 1 root dir
 	; inode 2 is loader, let's keep things easy
-	mov ax, word [DISK_BUFFER + 34 * 2 + inode.flags]
+	mov ax, word [DISK_BUFFER + 512 + 0x46 * 2 + inode.flags]
 	and ax, INODE_ALLOCATED
 	jz .err_no_loader
 
-	mov dword eax, [DISK_BUFFER + 34 * 2 + inode.size] ; size
+	mov dword eax, [DISK_BUFFER + 512 + 0x46 * 2 + inode.size] ; size
 	mov dword [uFsize], eax
 
-	xor ecx, ecx
-.read_loop:
+	xchg bx, bx
 
+	xor ecx, ecx
+	xor edx, edx
+	mov eax, DISK_BUFFER + 0x46 * 2 + inode.zone ; first zone
+.read_loop:
 	cmp dword ecx, [uFsize]
 	jg .all_read
+
+
+.zone_loop:
+	cmp edx, 7
+	jb .zone_direct
+	
+.zone_triple:
+
+.zone_double:
+	
+.zone_indirect:
+	
+.zone_direct:
+	mov eax, edx
+	shr eax, 2
+	add eax, DISK_BUFFER + 0x46 + 2 + inode.zone
+	
+
+	inc edx
+.end_zone:
 	add ecx, BLOCK_SIZE
 	jmp .read_loop
 .all_read:
-
-	mov eax, DISK_BUFFER + 34 * 2 + 14 ; first zone
-
-	mov ax, LOADER_BASE/10
-	mov es, ax
-
+	
 	jmp 0x0:LOADER_BASE
-
 .err_no_loader:
 	mov si, szErrorNoLoader
 	call bios_print
@@ -149,11 +166,12 @@ disk_read_sectors:
 	mov word [disk_packet.sectors], cx
 	mov word [disk_packet.segment], es
 	mov word [disk_packet.offset], bx
-	mov dword [disk_packet.lba], eax
-	mov si, [disk_packet]
-	mov dl, [bpb.drive_num]
+	mov dword [disk_packet.lba], eax 
+	mov si, disk_packet
+	mov dl, [bpb.drive_num]	
 	mov ah, 0x42
 	int 0x13
+	jc start.err_lba
 	ret
 
 disk_packet:

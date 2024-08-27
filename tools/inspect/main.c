@@ -34,7 +34,6 @@ static struct option long_options[] = {
 };
 #endif /* HAVE_STRUCT_OPTION */
 
-
 static int
 inspect(void)
 {

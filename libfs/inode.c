@@ -71,7 +71,7 @@ fs_inode_read(struct fs_inode *ip)
 	buff = fs_bio_bread(ip->super->fd, IBLOCK(ip->inum));
 	if (buff == NULL) return (NULL);
 
-	dinode = (struct stpdfs_inode *)buff->data + ip->inum % STPDFS_INODES_PER_BLOCK;;
+	dinode = (struct stpdfs_inode *)buff->data + ip->inum % STPDFS_INODES_PER_BLOCK;
 	memcpy(&ip->inode, dinode, sizeof(struct stpdfs_inode));
 
 	fs_bio_brelse(buff);
