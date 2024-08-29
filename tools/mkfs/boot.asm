@@ -103,7 +103,7 @@ start:
 
 	xor ecx, ecx
 	xor edx, edx
-	mov eax, DISK_BUFFER + 0x46 * 2 + inode.zone ; first zone
+	mov eax, DISK_BUFFER + 0x46 * 2 + inode.zones ; first zone
 .read_loop:
 	cmp dword ecx, [uFsize]
 	jg .all_read
@@ -122,7 +122,7 @@ start:
 .zone_direct:
 	mov eax, edx
 	shr eax, 2
-	add eax, DISK_BUFFER + 0x46 + 2 + inode.zone
+	add eax, DISK_BUFFER + 0x46 + 2 + inode.zones
 	
 
 	inc edx
