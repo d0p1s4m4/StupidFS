@@ -83,6 +83,10 @@ inspect(void)
 		printf(" gid: %hx\n", ip->inode.gid);
 		printf(" flags: %hx\n", ip->inode.flags);
 		printf(" size: %u\n", ip->inode.size);
+		for (idx = 0; idx < 10; idx++)
+		{
+			printf(" zone[%d]: 0x%X\n", idx, ip->inode.zones[idx]);
+		}
 		time = ip->inode.actime;
 		printf(" actime: %s", ctime(&time));
 		time = ip->inode.modtime;

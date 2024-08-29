@@ -1,3 +1,5 @@
+#include "libfs/inode.h"
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -67,12 +69,17 @@ do_copy(void)
 	}
 
 	ip = fs_inode_alloc(&super);
+	if (ip->valid == 0)
+	{
+		fs_inode_read(ip);
+	}
 	ip->inode.mode = st.st_mode;
 	ip->inode.uid = st.st_uid;
 	ip->inode.gid = st.st_gid;
 	ip->inode.modtime = st.st_mtime;
 	ip->inode.actime = st.st_atime;
 	ip->inode.flags = STPDFS_INO_FLAG_ALOC;
+
 
 	fs_inode_update(ip);
 

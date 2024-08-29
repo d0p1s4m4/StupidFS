@@ -1,11 +1,19 @@
 	[BITS 16]
 	[ORG 0x7c00]
 
+		; check reading reading media with lba
+		; read 2 first block (superblock & inode)
+		; validate that it's a StupidFS by checking magic
+		; check if inode 2 is present (loader reside in inode 2)
+		; get loader size
+		; iterate direct zone and load data to LOADER_BASE
+		; iterate double indirect and load data (in order to keep things simple we won't support loader > 69632 bytes)
+
 	LOADER_BASE  equ 0x1000
 	DISK_BUFFER  equ 0x8000
 	STPDFS_MAGIC equ 0x44505453
 	BLOCK_SIZE   equ 512
-	INODE_SIZE   equ 34
+	INODE_SIZE   equ 0x46
 	INODE_ALLOCATED equ (1<<15)
 	CR equ 0xD
 	LF equ 0xA
@@ -89,55 +97,71 @@ start:
 	cmp eax, STPDFS_MAGIC
 	jne .err_magic
 
-	; inode 0 bad
+	; inode 0 bad inode
 	; inode 1 root dir
 	; inode 2 is loader, let's keep things easy
-	mov ax, word [DISK_BUFFER + 512 + 0x46 * 2 + inode.flags]
+	mov ax, word [DISK_BUFFER + 512 + INODE_SIZE * 2 + inode.flags]
 	and ax, INODE_ALLOCATED
 	jz .err_no_loader
 
-	mov dword eax, [DISK_BUFFER + 512 + 0x46 * 2 + inode.size] ; size
+	mov dword eax, [DISK_BUFFER + 512 + INODE_SIZE * 2 + inode.size] ; size
 	mov dword [uFsize], eax
 
-	xchg bx, bx
+	; copy data to LOADER_BASE
+	mov ax, LOADER_BASE
+	mov es, ax
 
-	xor ecx, ecx
+	; direct read
 	xor edx, edx
-	mov eax, DISK_BUFFER + 0x46 * 2 + inode.zones ; first zone
-.read_loop:
-	cmp dword ecx, [uFsize]
+.direct_loop:
+	mov ax, es
+	movzx ecx, ax
+	sub ecx, LOADER_BASE
+	cmp ecx, [uFsize]
 	jg .all_read
 
-
-.zone_loop:
-	cmp edx, 7
-	jb .zone_direct
-	
-.zone_triple:
-
-.zone_double:
-	
-.zone_indirect:
-	
-.zone_direct:
 	mov eax, edx
-	shr eax, 2
-	add eax, DISK_BUFFER + 0x46 + 2 + inode.zones
-	
+	shl eax, 2
+	add eax, DISK_BUFFER + 512 + INODE_SIZE * 2 + inode.zones
 
+	push edx
+
+	; copy block
+	mov eax, [eax]
+	mov cx, 1
+	xor bx, bx
+	call disk_read_sectors
+
+	pop edx
+
+	mov ax, es
+	add ax, BLOCK_SIZE
+	mov es, ax
 	inc edx
-.end_zone:
-	add ecx, BLOCK_SIZE
-	jmp .read_loop
+	cmp edx, 8
+	jbe .direct_loop
+
+.indirect_read:
+	; TODO
+
+
 .all_read:
-	
+
+	; jump to loader
+	mov dl, [bpb.drive_num]
 	jmp 0x0:LOADER_BASE
+
+
 .err_no_loader:
 	mov si, szErrorNoLoader
 	call bios_print
 	jmp .end
 .err_magic:
 	mov si, szErrorNoLoader
+	call bios_print
+	jmp .end
+.err_read:
+	mov si, szErrorRead
 	call bios_print
 	jmp .end
 .err_lba:
@@ -160,6 +184,7 @@ bios_print:
 szErrorNoLoader: db "Loader not found", CR, LF, 0
 szErrorBadMagic: db "Err: magic", CR, LF, 0
 szErrorLBA: db "Err: LBA", CR, LF, 0
+szErrorRead: db "Err: read", CR, LF, 0
 uFsize: dd 0
 
 disk_read_sectors:
@@ -171,7 +196,7 @@ disk_read_sectors:
 	mov dl, [bpb.drive_num]	
 	mov ah, 0x42
 	int 0x13
-	jc start.err_lba
+	jc start.err_read
 	ret
 
 disk_packet:
