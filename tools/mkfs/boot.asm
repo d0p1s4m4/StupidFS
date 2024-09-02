@@ -83,7 +83,7 @@ start:
 	jc .reset_disk
 
 	; read superblock
-	mov ax, DISK_BUFFER
+	mov ax, DISK_BUFFER/0x10
 	mov es, ax
 
 	; load two sector in memory 
@@ -108,16 +108,14 @@ start:
 	mov dword [uFsize], eax
 
 	; copy data to LOADER_BASE
-	mov ax, LOADER_BASE
+	mov ax, LOADER_BASE/0x10
 	mov es, ax
 
 	; direct read
 	xor edx, edx
+	xor ebx, ebx
 .direct_loop:
-	mov ax, es
-	movzx ecx, ax
-	sub ecx, LOADER_BASE
-	cmp ecx, [uFsize]
+	cmp ebx, [uFsize]
 	jg .all_read
 
 	mov eax, edx
@@ -129,21 +127,46 @@ start:
 	; copy block
 	mov eax, [eax]
 	mov cx, 1
-	xor bx, bx
 	call disk_read_sectors
 
 	pop edx
 
-	mov ax, es
-	add ax, BLOCK_SIZE
-	mov es, ax
+	add ebx, BLOCK_SIZE
 	inc edx
-	cmp edx, 8
-	jbe .direct_loop
+	cmp edx, 7
+	jb .direct_loop
 
 .indirect_read:
-	; TODO
+	push ebx
 
+	mov ax, DISK_BUFFER/10
+	mov es, ax
+
+	mov eax, [DISK_BUFFER + 512 + INODE_SIZE * 2 + inode.zones + 28] ;zones[7] == indirect
+	mov cx, 1
+	xor bx, bx
+	call disk_read_sectors
+
+	mov ax, LOADER_BASE/10
+	mov es, ax
+	pop ebx
+
+	xor edx, edx
+.indirect_loop:
+	cmp ebx, [uFsize]
+	jg .all_read
+	mov eax, edx 
+	shl eax, 2
+	add eax, DISK_BUFFER
+
+	mov eax, [eax]
+	mov cx, 1
+	call disk_read_sectors
+
+	add ebx, BLOCK_SIZE
+	inc edx
+	cmp edx, 128
+	jbe .indirect_loop
 
 .all_read:
 
@@ -204,9 +227,9 @@ disk_packet:
 	db 0
 .sectors:
 	dw 0
-.segment:
-	dw 0
 .offset:
+	dw 0
+.segment:
 	dw 0
 .lba:
 	dd 0
