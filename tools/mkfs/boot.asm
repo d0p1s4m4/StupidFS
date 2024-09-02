@@ -139,7 +139,7 @@ start:
 .indirect_read:
 	push ebx
 
-	mov ax, DISK_BUFFER/10
+	mov ax, DISK_BUFFER/0x10
 	mov es, ax
 
 	mov eax, [DISK_BUFFER + 512 + INODE_SIZE * 2 + inode.zones + 28] ;zones[7] == indirect
@@ -147,7 +147,7 @@ start:
 	xor bx, bx
 	call disk_read_sectors
 
-	mov ax, LOADER_BASE/10
+	mov ax, LOADER_BASE/0x10
 	mov es, ax
 	pop ebx
 

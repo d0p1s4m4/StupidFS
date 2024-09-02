@@ -38,6 +38,7 @@ bmap(struct fs_inode *ip, uint32_t blocknum)
 		if (addrs[index] == 0)
 		{
 			addrs[index] = fs_balloc(ip->super);
+			fs_bio_bwrite(buff);
 		}
 		fs_bio_brelse(buff);
 		return (addrs[index]);
