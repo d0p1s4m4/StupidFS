@@ -20,6 +20,8 @@
 static struct option long_options[] = {
 	{"help", no_argument, 0, 'h'},
 	{"image", required_argument, 0, 'i'},
+	{"uid", required_argument, 0, 'u'},
+	{"gid", required_argument, 0, 'g'},
 	{0, 0, 0, 0}
 };
 #endif /* HAVE_STRUCT_OPTION */
@@ -27,6 +29,8 @@ static struct option long_options[] = {
 static char *dest = NULL;
 static char *src = NULL;
 static char *image = NULL;
+static int gid = -1;
+static int uid = -1;
 
 extern char *prg_name;
 
@@ -74,8 +78,24 @@ do_copy(void)
 		fs_inode_read(ip);
 	}
 	ip->inode.mode = st.st_mode;
-	ip->inode.uid = st.st_uid;
-	ip->inode.gid = st.st_gid;
+	if (uid >= 0)
+	{
+		ip->inode.uid = uid;
+	}
+	else
+	{
+		ip->inode.uid = st.st_uid;
+	}
+
+	if (gid >= 0)
+	{
+		ip->inode.gid = gid;
+	}
+	else
+	{
+		ip->inode.gid = st.st_gid;
+	}
+
 	ip->inode.modtime = st.st_mtime;
 	ip->inode.actime = st.st_atime;
 	ip->inode.flags = STPDFS_INO_FLAG_ALOC;
@@ -114,9 +134,9 @@ cmd_copy(int argc, char **argv)
 	int c;
 
 #if defined(HAVE_GETOPT_LONG) && defined(HAVE_STRUCT_OPTION)
-	while ((c = getopt_long(argc, argv, "hi:", long_options, &idx)) != EOF)
+	while ((c = getopt_long(argc, argv, "hi:u:g:", long_options, &idx)) != EOF)
 #else
-	while ((c = getopt(argc, argv, "hi:")) != EOF)
+	while ((c = getopt(argc, argv, "hi:u:g:")) != EOF)
 #endif
 	{
 		switch (c)
@@ -127,6 +147,14 @@ cmd_copy(int argc, char **argv)
 
 		case 'i':
 			image = optarg;
+			break;
+
+		case 'u':
+			uid = atoi(optarg);
+			break;
+
+		case 'g':
+			gid = atoi(optarg);
 			break;
 
 		default:

@@ -52,10 +52,13 @@ fs_inode_get(struct fs_super *super, uint32_t inum)
 	ip = (struct fs_inode *)malloc(sizeof(struct fs_inode));
 	if (ip == NULL) return (NULL);
 
+	ip->next = head;
 	ip->super = super;
 	ip->inum = inum;
 	ip->refcount = 1;
 	ip->valid = 0;
+
+	head = ip;
 
 	return (ip);
 }

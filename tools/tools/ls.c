@@ -1,10 +1,8 @@
-
-#include "libfs/fs.h"
 #include "libfs/inode.h"
-#include "libfs/super.h"
-#include "stupidfs.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <time.h>
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif /* HAVE_CONFIG_H */
@@ -14,11 +12,14 @@
 #ifdef HAVE_GETOPT_H
 # include <getopt.h>
 #endif /* HAVE_GETOPT_H */
+#include <stupidfs.h>
+#include "libfs/fs.h"
 
 #ifdef HAVE_STRUCT_OPTION
 static struct option long_options[] = {
 	{"help", no_argument, 0, 'h'},
 	{"image", required_argument, 0, 'i'},
+	{"all", no_argument, 0, 'a'},
 	{0, 0, 0, 0}
 };
 #endif /* HAVE_STRUCT_OPTION */
@@ -48,6 +49,98 @@ usage(int retval)
 	exit(retval);
 }
 
+static void
+print_mode(struct fs_inode *ip)
+{
+	char modebuff[] = "----------";
+
+	if (ip->inode.mode & STPDFS_S_IFDIR)
+	{
+		modebuff[0] = 'd';
+	}
+
+	if (ip->inode.mode & STPDFS_S_IRUSR)
+	{
+		modebuff[1] = 'r';
+	}
+
+	if (ip->inode.mode & STPDFS_S_IWUSR)
+	{
+		modebuff[2] = 'w';
+	}
+
+	if (ip->inode.mode & STPDFS_S_IXUSR)
+	{
+		modebuff[3] = 'x';
+	}
+
+	if (ip->inode.mode & STPDFS_S_IRGRP)
+	{
+		modebuff[4] = 'r';
+	}
+
+	if (ip->inode.mode & STPDFS_S_IWGRP)
+	{
+		modebuff[5] = 'w';
+	}
+
+	if (ip->inode.mode & STPDFS_S_IXGRP)
+	{
+		modebuff[6] = 'x';
+	}
+
+	if (ip->inode.mode & STPDFS_S_IROTH)
+	{
+		modebuff[7] = 'r';
+	}
+
+	if (ip->inode.mode & STPDFS_S_IWOTH)
+	{
+		modebuff[8] = 'w';
+	}
+
+	if (ip->inode.mode & STPDFS_S_IXOTH)
+	{
+		modebuff[9] = 'x';
+	}
+
+	printf("%s ", modebuff);
+}
+
+static void
+print_time(struct fs_inode *ip)
+{
+	char timebuff[13];
+	time_t time;
+
+	time = ip->inode.modtime;
+
+	strftime(timebuff, 13, "%b %y %H:%M", localtime(&time));
+	printf("%s ", timebuff);
+}
+
+static void 
+print_dirent(struct fs_super *super, struct stpdfs_dirent *dirent)
+{
+	struct fs_inode *ip;
+
+	ip = fs_inode_get(super, dirent->inode);
+	if (ip->valid == 0)
+	{
+		fs_inode_read(ip);
+	}
+	print_mode(ip);
+	printf("%u ", ip->inode.nlink);
+	printf("%3u %3u ", ip->inode.uid, ip->inode.gid);
+	printf("%5u ", ip->inode.size);
+
+	print_time(ip);
+
+	printf("%s\n", dirent->filename);
+
+	fs_inode_release(ip);
+}
+
 static int
 do_ls(void)
 {
@@ -70,13 +163,18 @@ do_ls(void)
 	for (idx = 0; idx < ip->inode.size; idx += STPDFS_DIRENT_SIZE)
 	{
 		fs_read(ip, (uint8_t *)&dirent, idx, STPDFS_DIRENT_SIZE);
+		if (dirent.inode == 0)
+		{
+			continue;
+		}
+
 		if (dirent.filename[0] == '.')
 		{
-			if (all) printf("%s\n", dirent.filename);
+			if (all) print_dirent(&super, &dirent);
 		}
 		else
 		{
-			printf("%s\n", dirent.filename);
+			print_dirent(&super, &dirent);
 		}
 	}
 
