@@ -161,7 +161,9 @@ start:
 
 	mov eax, [eax]
 	mov cx, 1
+	push edx
 	call disk_read_sectors
+	pop edx
 
 	add ebx, BLOCK_SIZE
 	inc edx

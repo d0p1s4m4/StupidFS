@@ -105,6 +105,10 @@ inspect(void)
 				for (j = 0; j < 8; j++)
 				{
 					printf("%02x ", buff->data[idx+j]);
+					if (j == 3)
+					{
+						printf(" ");
+					}
 				}
 				printf(" | ");
 				for (j = 0; j < 8; j++)
@@ -185,7 +189,7 @@ main(int argc, char **argv)
 			break;
 
 		case 'b':
-			block = atoi(optarg);
+			block = strtol(optarg, NULL, 0);
 			break;
 
 		case 's':

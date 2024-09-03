@@ -108,7 +108,7 @@ do_copy(void)
 }
 
 int
-copy(int argc, char **argv)
+cmd_copy(int argc, char **argv)
 {
 	int idx;
 	int c;

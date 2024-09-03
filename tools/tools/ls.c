@@ -25,6 +25,7 @@ static struct option long_options[] = {
 
 static char *path = "/";
 static char *image = NULL;
+static int all = 0;
 
 extern char *prg_name;
 
@@ -37,7 +38,11 @@ usage(int retval)
 	}
 	else
 	{
-		printf("Usage: %s ls -i /dev/name [path]\n", prg_name);
+		printf("Usage: %s ls -i /dev/name [OPTIONS]... FILE...\n", prg_name);
+		printf("Options:\n");
+		printf(" -i, --image <image>  specify disk image.\n");
+		printf(" -a, --all            do not ignore entries starting with .\n");
+		printf(" -h, --help           display this menu\n");
 	}
 
 	exit(retval);
@@ -65,7 +70,14 @@ do_ls(void)
 	for (idx = 0; idx < ip->inode.size; idx += STPDFS_DIRENT_SIZE)
 	{
 		fs_read(ip, (uint8_t *)&dirent, idx, STPDFS_DIRENT_SIZE);
-		printf("%s\n", dirent.filename);
+		if (dirent.filename[0] == '.')
+		{
+			if (all) printf("%s\n", dirent.filename);
+		}
+		else
+		{
+			printf("%s\n", dirent.filename);
+		}
 	}
 
 
@@ -74,15 +86,15 @@ do_ls(void)
 }
 
 int
-ls(int argc, char **argv)
+cmd_ls(int argc, char **argv)
 {
 	int idx;
 	int c;
 
 #if defined(HAVE_GETOPT_LONG) && defined(HAVE_STRUCT_OPTION)
-	while ((c = getopt_long(argc, argv, "hi:", long_options, &idx)) != EOF)
+	while ((c = getopt_long(argc, argv, "hi:a", long_options, &idx)) != EOF)
 #else
-	while ((c = getopt(argc, argv, "hi:")) != EOF)
+	while ((c = getopt(argc, argv, "hi:a")) != EOF)
 #endif
 	{
 		switch (c)
@@ -93,6 +105,10 @@ ls(int argc, char **argv)
 
 		case 'i':
 			image = optarg;
+			break;
+		
+		case 'a':
+			all = 1;
 			break;
 
 		default:
