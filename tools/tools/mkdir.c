@@ -1,4 +1,3 @@
-#include "libfs/inode.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,7 +27,7 @@ static struct option long_options[] = {
 #endif /* HAVE_STRUCT_OPTION */
 
 static char *image = NULL;
-static mode_t mode = STPDFS_S_IFDIR | STPDFS_S_IRUSR | STPDFS_S_IWUSR | STPDFS_S_IXUSR | STPDFS_S_IRGRP | STPDFS_S_IXGRP | STPDFS_S_IXOTH;
+static mode_t mode = STPDFS_S_IRUSR | STPDFS_S_IWUSR | STPDFS_S_IXUSR | STPDFS_S_IRGRP | STPDFS_S_IXGRP | STPDFS_S_IXOTH;
 static int parents = 0;
 static int verbose = 0;
 
@@ -54,7 +53,7 @@ usage(int retval)
 }
 
 int
-do_mkdir(struct fs_inode *root, char *path)
+do_mkdir(struct fs_super *super, char *path)
 {
 	char *dir;
 	char *tmp;
@@ -62,9 +61,27 @@ do_mkdir(struct fs_inode *root, char *path)
 	struct fs_inode *subdp;
 
 	dir = strtok(path, "/");
+	dp = fs_inode_get(super, STPDFS_ROOTINO);
+	if (dp->valid == 0)
+	{
+		fs_inode_read(dp);
+	}
+
 	while (dir != NULL)
 	{
 		tmp = strtok(NULL, "/");
+		subdp = fs_dir_lookup(dp, dir, NULL);
+		if (tmp == NULL)
+		{
+			if (subdp != NULL)
+			{
+				fprintf(stderr, "mkdir: cannot create directory '%s': File exists", dir);
+				return (EXIT_FAILURE);
+			}
+			
+			fs_mkdir(dp, dir, mode);
+			return (EXIT_SUCCESS);
+		}
 		printf("%s\n", dir);
 		dir = tmp;
 	}
@@ -131,17 +148,11 @@ cmd_mkdir(int argc, char **argv)
 		return (EXIT_FAILURE);
 	}
 
-	root = fs_inode_get(&super, STPDFS_ROOTINO);
-	if (root->valid == 0)
-	{
-		fs_inode_read(root);
-	}
-
 	status = EXIT_SUCCESS;
 
 	while (optind < argc)
 	{
-		if (do_mkdir(root, argv[optind++]))
+		if (do_mkdir(&super, argv[optind++]))
 		{
 			status = EXIT_FAILURE;
 			break;

@@ -11,7 +11,7 @@ fs_dir_lookup(struct fs_inode *dp, const char *name, size_t *offset)
 	size_t idx;
 	struct stpdfs_dirent dirent;
 
-	if (!(dp->inode.flags & STPDFS_S_IFDIR))
+	if ((dp->inode.flags & STPDFS_S_IFMT) != STPDFS_S_IFDIR)
 	{
 		errno = ENOTDIR;
 		return (NULL);
@@ -82,56 +82,61 @@ fs_dir_link(struct fs_inode *dp, const char *name, uint32_t inum)
 int
 fs_dir_unlink(struct fs_inode *dp, const char *name)
 {
-  int offset;
-  struct fs_inode *ip;
-  struct stpdfs_dirent dirent;
+	int offset;
+	struct fs_inode *ip;
+	struct stpdfs_dirent dirent;
 
-  ip = fs_dir_lookup(dp, name, 0);
-  if (ip == NULL)
-    {
-      return (-1);
-    }
-
-  ip->inode.nlink -= 1;
-
-  fs_inode_update(ip);
-  fs_inode_release(ip);
-
-  for (offset = 0; offset < dp->inode.size; offset += STPDFS_DIRENT_SIZE)
-    {
-      fs_read(dp, (uint8_t *)&dirent, offset, STPDFS_DIRENT_SIZE);
-      if (strncmp(dirent.filename, name, STPDFS_NAME_MAX) == 0)
+	ip = fs_dir_lookup(dp, name, 0);
+	if (ip == NULL)
 	{
-	  memset(dirent.filename, 0, STPDFS_NAME_MAX);
-	  dirent.inode = 0;
-	  fs_write(dp, (uint8_t *)&dirent, offset, STPDFS_DIRENT_SIZE);
-	  break;
+		return (-1);
 	}
-    }
+
+	ip->inode.nlink -= 1;
+
+	fs_inode_update(ip);
+	fs_inode_release(ip);
+
+	for (offset = 0; offset < dp->inode.size; offset += STPDFS_DIRENT_SIZE)
+	{
+		fs_read(dp, (uint8_t *)&dirent, offset, STPDFS_DIRENT_SIZE);
+		if (strncmp(dirent.filename, name, STPDFS_NAME_MAX) == 0)
+		{
+			memset(dirent.filename, 0, STPDFS_NAME_MAX);
+			dirent.inode = 0;
+			fs_write(dp, (uint8_t *)&dirent, offset, STPDFS_DIRENT_SIZE);
+			break;
+		}
+	}
 }
 
 int
-fs_mkdir(struct fs_inode *dp, const char *name)
+fs_mkdir(struct fs_inode *dp, const char *name, uint16_t mode)
 {
-  struct fs_inode *ndp;
+	struct fs_inode *ndp;
+	
+	if ((dp->inode.mode & STPDFS_S_IFMT) != STPDFS_S_IFDIR)
+	{
+		return (-1);
+	}
+	
+	ndp = fs_inode_alloc(dp->super);
+	if (ndp == NULL)
+	{
+		return (-1);
+	}
+	if (ndp->valid == 0)
+	{
+		fs_inode_read(ndp);
+	}
 
-  if (!(dp->inode.mode & STPDFS_S_IFDIR))
-    {
-      return (-1);
-    }
-
-  ndp = fs_inode_alloc(dp->super);
-  if (ndp == NULL)
-    {
-      return (-1);
-    }
-
-  ndp->inode.mode |= STPDFS_S_IFDIR;
-
-  fs_dir_link(ndp, ".", ndp->inum);
-  fs_dir_link(ndp, "..", dp->inum);
-
-  fs_dir_link(dp, name, ndp->inum);
-
-  return (0);
+	ndp->inode.mode = mode;
+	ndp->inode.mode |= STPDFS_S_IFDIR;
+	
+	fs_dir_link(ndp, ".", ndp->inum);
+	fs_dir_link(ndp, "..", dp->inum);
+	
+	fs_dir_link(dp, name, ndp->inum);
+	
+	return (0);
 }

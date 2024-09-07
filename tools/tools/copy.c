@@ -22,6 +22,8 @@ static struct option long_options[] = {
 	{"image", required_argument, 0, 'i'},
 	{"uid", required_argument, 0, 'u'},
 	{"gid", required_argument, 0, 'g'},
+	{"mode", required_argument, 0, 'm'},
+	{"recursive", no_argument, 0, 'r'},
 	{0, 0, 0, 0}
 };
 #endif /* HAVE_STRUCT_OPTION */
@@ -31,6 +33,8 @@ static char *src = NULL;
 static char *image = NULL;
 static int gid = -1;
 static int uid = -1;
+static int recursive = 0;
+static int mode = -1;
 
 extern char *prg_name;
 
@@ -43,7 +47,14 @@ usage(int retval)
 	}
 	else
 	{
-		printf("Usage: %s copy -i /dev/name source [dest]\n", prg_name);
+		printf("Usage: %s copy -i /dev/name [OPTIONS]... SOURCE [DEST]\n", prg_name);
+		printf("Options:\n");
+		printf(" -i, --image <image> specify disk image\n");
+		printf(" -u, --uid <uid>     XXX\n");
+		printf(" -g, --gid <gid>     XXX\n");
+		printf(" -m, --mode <mode>   XXX\n");
+		printf(" -r, --recursive     XXX\n");
+		printf(" -h, --help          display this menu\n");
 	}
 }
 
@@ -78,6 +89,7 @@ do_copy(void)
 		fs_inode_read(ip);
 	}
 	ip->inode.mode = st.st_mode;
+
 	if (uid >= 0)
 	{
 		ip->inode.uid = uid;
@@ -99,7 +111,6 @@ do_copy(void)
 	ip->inode.modtime = st.st_mtime;
 	ip->inode.actime = st.st_atime;
 	ip->inode.flags = STPDFS_INO_FLAG_ALOC;
-
 
 	fs_inode_update(ip);
 
@@ -134,9 +145,9 @@ cmd_copy(int argc, char **argv)
 	int c;
 
 #if defined(HAVE_GETOPT_LONG) && defined(HAVE_STRUCT_OPTION)
-	while ((c = getopt_long(argc, argv, "hi:u:g:", long_options, &idx)) != EOF)
+	while ((c = getopt_long(argc, argv, "hi:u:g:rm:", long_options, &idx)) != EOF)
 #else
-	while ((c = getopt(argc, argv, "hi:u:g:")) != EOF)
+	while ((c = getopt(argc, argv, "hi:u:g:rm:")) != EOF)
 #endif
 	{
 		switch (c)
@@ -155,6 +166,14 @@ cmd_copy(int argc, char **argv)
 
 		case 'g':
 			gid = atoi(optarg);
+			break;
+
+		case 'm':
+			mode = strtol(optarg, NULL, 8);
+			break;
+
+		case 'r':
+			recursive = 1;
 			break;
 
 		default:

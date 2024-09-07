@@ -21,6 +21,7 @@ struct command commands[] = {
 	{"ls", &cmd_ls},
 	{"copy", &cmd_copy},
 	{"mkdir", &cmd_mkdir},
+	{"rm", &cmd_rm},
 	{NULL, NULL}
 };
 

@@ -158,6 +158,8 @@ mkfs()
 	
 	rootip->valid = 1;
 
+	rootip->inode.gid = 0;
+	rootip->inode.uid = 0;
 	rootip->inode.modtime = time(NULL);
 	rootip->inode.actime = time(NULL);
 	memset(rootip->inode.zones, 0, sizeof(uint32_t) * 10);

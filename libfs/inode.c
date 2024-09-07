@@ -1,6 +1,7 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "inode.h"
 #include "bio/bio.h"
 #include "stupidfs.h"
@@ -23,6 +24,8 @@ fs_inode_alloc(struct fs_super *super)
 		if ((dinode->flags & STPDFS_INO_FLAG_ALOC) == 0)
 		{
 			memset(dinode, 0, sizeof(struct stpdfs_inode));
+			dinode->actime = time(NULL);
+			dinode->modtime = dinode->actime;
 			dinode->flags = STPDFS_INO_FLAG_ALOC;
 			fs_bio_bwrite(buff);
 			fs_bio_brelse(buff);
