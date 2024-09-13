@@ -23,6 +23,16 @@ static int inode = -1;
 static int block = -1;
 static int super = 0;
 
+static const struct {
+	int flag;
+	char *name;
+} flags[] = {
+	{STPDFS_INO_FLAG_ALOC, "ALLOCATED"},
+	{STPDFS_INO_FLAG_ENC, "XCHACHA12"},
+	{STPDFS_INO_FLAG_LZP, "LZP"},
+	{0, NULL}
+};
+
 #ifdef HAVE_STRUCT_OPTION
 static struct option long_options[] = {
 	{"help", no_argument, 0, 'h'},
@@ -81,7 +91,15 @@ inspect(void)
 		printf(" nlink: %hu\n", ip->inode.nlink);
 		printf(" uid: %hx\n", ip->inode.uid);
 		printf(" gid: %hx\n", ip->inode.gid);
-		printf(" flags: %hx\n", ip->inode.flags);
+		printf(" flags: ");
+		for (idx = 0; flags[idx].name != NULL; idx++)
+		{
+			if (ip->inode.flags & flags[idx].flag)
+			{
+				printf("%s ", flags[idx].name);
+			}
+		}
+		printf("\n");
 		printf(" size: %u\n", ip->inode.size);
 		for (idx = 0; idx < 10; idx++)
 		{
