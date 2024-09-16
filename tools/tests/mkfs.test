@@ -1,0 +1,17 @@
+#!/bin/sh
+
+echo '# create raw disk image'
+dd if=/dev/zero of=test0.img bs=512 count=2880
+
+echo 1..2
+
+echo '# run mkfs.stpd'
+../mkfs.stpd test0.img \
+	&& echo "ok - mkfs exited with success" \
+	|| echo "not ok - mkfs exited with ${status}"
+
+../inspect.stpd -s test0.img \
+	&& echo "ok - superblock is valid" \
+	|| echo "not ok - invalid superblock"
+
+rm -f test0.img

@@ -1,3 +1,5 @@
+SUBDIRS = tests
+
 AM_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib -I$(top_srcdir)
 LDADD = ../libfs/libfs.a
 

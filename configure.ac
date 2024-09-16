@@ -1,8 +1,11 @@
 AC_INIT([StupidFS], [0.0])
 
+AC_CONFIG_MACRO_DIRS([m4])
+AC_CONFIG_AUX_DIR([build-aux])
+
 AM_INIT_AUTOMAKE([foreign subdir-objects])
 
-AC_CONFIG_MACRO_DIRS([m4])
+AC_REQUIRE_AUX_FILE([tap-driver.sh])
 
 AC_CANONICAL_HOST
 
@@ -56,6 +59,7 @@ AC_CONFIG_FILES([Makefile
 				libfs/Makefile
 				libfs/tests/Makefile
 				tools/Makefile
+				tools/tests/Makefile
 				linux/Makefile
 				fuse/Makefile])
 
