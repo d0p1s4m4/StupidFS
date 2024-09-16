@@ -161,7 +161,13 @@ usage(int retval)
 	}
 	else
 	{
-		printf("Usage %s: [options] /dev/name\n\n", prg_name);
+		printf("Usage %s: [OPTIONS]... /dev/name\n\n", prg_name);
+		printf("Options:\n");
+		printf(" -i, --inode <inum> inspect inode\n.");
+		printf(" -b, --block <bnum> inspect block\n");
+		printf(" -s, --super        inspect superblock\n");
+		printf(" -h, --help         display this menu\n");
+		printf(" -V, --version      display version information\n");
 	}
 
 	exit(retval);

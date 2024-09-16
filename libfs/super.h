@@ -6,6 +6,7 @@
 
 struct fs_super {
 	int fd;
+	uint64_t offset;
 	struct stpdfs_sb sb;
 };
 

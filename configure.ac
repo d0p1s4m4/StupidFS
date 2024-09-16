@@ -32,6 +32,8 @@ AC_CHECK_INCLUDES_DEFAULT
 AC_C_CONST
 AC_C_INLINE
 
+AC_CHECK_FUNCS_ONCE(strtoull)
+
 AC_CHECK_HEADERS(m4_normalize([
 	libgen.h
 	getopt.h
@@ -52,6 +54,7 @@ AC_CONFIG_FILES([Makefile
 				liblzp/Makefile
 				liblzp/tests/Makefile
 				libfs/Makefile
+				libfs/tests/Makefile
 				tools/Makefile
 				linux/Makefile
 				fuse/Makefile])

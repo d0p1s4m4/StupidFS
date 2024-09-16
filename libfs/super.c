@@ -1,10 +1,13 @@
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <stupidfs.h>
 #include "super.h"
 #include "bio/bio.h"
+
+uint64_t fs_str2offset(const char *str);
 
 int
 fs_super_valide(struct stpdfs_sb *sb)
@@ -36,12 +39,20 @@ fs_super_valide(struct stpdfs_sb *sb)
 	return (0);
 }
 
+/**
+ * \param super 
+ * \param fname
+ */
 int
 fs_super_open(struct fs_super *super, const char *fname)
 {
 	struct fs_buffer *buff;
+	char *ptr;
+
+	ptr = (char *)fname;
+
 #ifdef _WIN32
-	super->fd = open(fname, O_RDWR | O_BINARY);
+	super->fd = open(strtok(ptr, "@@"), O_RDWR | O_BINARY);
 #else
 	super->fd = open(fname, O_RDWR);
 #endif
@@ -50,6 +61,8 @@ fs_super_open(struct fs_super *super, const char *fname)
 		perror(fname);
 		return (-1);
 	}
+
+	super->offset = fs_str2offset(strtok(NULL, "@@"));
 
 	buff = fs_bio_bread(super->fd, STPDFS_SB_BLOCK);
 	if (!buff) goto err;
