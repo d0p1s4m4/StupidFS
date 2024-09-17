@@ -15,6 +15,7 @@
 #endif /* HAVE_GETOPT_H */
 #include <stupidfs.h>
 #include "libfs/fs.h"
+#include "ls/colors.h"
 
 #ifdef HAVE_STRUCT_OPTION
 static struct option long_options[] = {
@@ -172,26 +173,59 @@ print_size(struct fs_inode *ip)
 static void
 print_name(struct stpdfs_dirent *dirent, struct fs_inode *ip)
 {
+	enum COLORS type;
+
+	type = C_NORM;
+
+	if ((ip->inode.mode & STPDFS_S_IFMT) == STPDFS_S_IFREG)
+	{
+		type = C_FILE;
+	}
+	else if ((ip->inode.mode & STPDFS_S_IFMT) == STPDFS_S_IFDIR)
+	{
+		if (ip->inode.mode & (STPDFS_S_IWOTH | STPDFS_S_ISVTX))
+		{
+			type = C_STICKY_OTH_WRITABLE;
+		}
+		else if (ip->inode.mode & STPDFS_S_ISVTX)
+		{
+			type = C_STICKY;
+		}
+		else if (ip->inode.mode & STPDFS_S_IWOTH)
+		{
+			type = C_OTHER_WRITABLE;
+		}
+		else
+		{
+			type = C_DIR;
+		}
+	}
+	else if ((ip->inode.mode & STPDFS_S_IFMT) == STPDFS_S_IFLNK)
+	{
+		type = C_LINK;
+	}
+	else if (ip->inode.mode & STPDFS_S_ISUID)
+	{
+		type = C_SETUID;
+	}
+	else if (ip->inode.mode & STPDFS_S_ISGID)
+	{
+		type = C_SETGID;
+	}
+	else if (ip->inode.mode & STPDFS_S_IXUSR)
+	{
+		type = C_EXEC;
+	}
+
 	if (color)
 	{
-		if ((ip->inode.mode & STPDFS_S_IFMT) == STPDFS_S_IFDIR)
-		{
-			printf("\033[01;34m");
-		}
-		else if ((ip->inode.mode & STPDFS_S_IFMT) == STPDFS_S_IFLNK)
-		{
-			printf("\033[01;36m");
-		}
-		else if (ip->inode.mode & STPDFS_S_IXUSR)
-		{
-			printf("\033[01;32m");
-		}
+		printf("%s%s%s", ls_colors[C_LEFT], ls_colors[type], ls_colors[C_RIGHT]);
 	}
 
 	printf("%s\n", dirent->filename);
 	if (color)
 	{
-		printf("\033[0m");
+		printf("%s%s%s", ls_colors[C_LEFT], ls_colors[C_END], ls_colors[C_RIGHT]);
 	}
 }
 
@@ -294,6 +328,7 @@ cmd_ls(int argc, char **argv)
 			break;
 
 		case 'c':
+			ls_parse_colors();
 			color = 1;
 			break;
 
