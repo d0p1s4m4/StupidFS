@@ -35,11 +35,10 @@ AC_CHECK_INCLUDES_DEFAULT
 AC_C_CONST
 AC_C_INLINE
 
-AC_CHECK_FUNCS_ONCE(strtoull)
-
 AC_CHECK_HEADERS(m4_normalize([
 	libgen.h
 	getopt.h
+	sys/random.h
 ]))
 
 AC_CHECK_TYPES([struct option], [], [],
@@ -49,6 +48,8 @@ AC_CHECK_TYPES([struct option], [], [],
 
 AC_CHECK_FUNCS(m4_normalize([
 	getopt_long
+	strtoull
+	getrandom
 ]))
 
 AC_CONFIG_FILES([Makefile
