@@ -12,7 +12,9 @@ static int
 bmap(struct fs_inode *ip, uint32_t blocknum)
 {
 	uint32_t *addrs;
+	uint32_t *dind_addrs;
 	uint32_t index;
+	uint32_t tmp;
 	struct fs_buffer *buff;
 
 	if (blocknum < STPDFS_NDIR)
@@ -40,11 +42,46 @@ bmap(struct fs_inode *ip, uint32_t blocknum)
 			addrs[index] = fs_balloc(ip->super);
 			fs_bio_bwrite(buff);
 		}
+		tmp = addrs[index];
 		fs_bio_brelse(buff);
-		return (addrs[index]);
+		return (tmp);
 	}
 
-	/* TODO double and triple ind  */
+	index = blocknum - (STPDFS_NDIR + (STPDFS_BLOCK_SIZE / sizeof(uint32_t)));
+	if (blocknum < (STPDFS_NDIR + (STPDFS_BLOCK_SIZE / sizeof(uint32_t))))
+	{
+		if (ip->inode.zones[STPDFS_DIND] == 0)
+		{
+			ip->inode.zones[STPDFS_DIND] = fs_balloc(ip->super);
+		}
+
+		buff = fs_bio_bread(ip->super->fd, ip->inode.zones[STPDFS_DIND]);
+		dind_addrs = (uint32_t *)buff->data;
+
+		if (dind_addrs[index / (STPDFS_BLOCK_SIZE / sizeof(uint32_t))] == 0)
+		{
+			dind_addrs[index / (STPDFS_BLOCK_SIZE / sizeof(uint32_t))] = fs_balloc(ip->super);
+			fs_bio_bwrite(buff);
+		}
+
+		tmp = dind_addrs[index / (STPDFS_BLOCK_SIZE / sizeof(uint32_t))];
+		fs_bio_brelse(buff);
+
+		buff = fs_bio_bread(ip->super->fd, tmp);
+		addrs = (uint32_t *)buff->data;
+
+		if (addrs[index % (STPDFS_BLOCK_SIZE / sizeof(uint32_t))] == 0)
+		{
+			addrs[index % (STPDFS_BLOCK_SIZE / sizeof(uint32_t))] = fs_balloc(ip->super);
+			fs_bio_bwrite(buff);
+		}
+
+		tmp = addrs[index % (STPDFS_BLOCK_SIZE / sizeof(uint32_t))];
+		fs_bio_brelse(buff);
+
+		return (tmp);
+	}
+	/* triple ind  */
 	return (0);
 }
 
